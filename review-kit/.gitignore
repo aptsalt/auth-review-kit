@@ -1,0 +1,13 @@
+# Tenant URL + discovered endpoints — environment-specific, never shared
+config/dynatrace.local.json
+
+# Raw telemetry pulls. Problem payloads can carry customer-identifying detail,
+# request bodies and internal hostnames. Keep them local.
+_dynatrace/
+
+# Local smoke output
+_smoke/
+
+__pycache__/
+*.pyc
+.DS_Store

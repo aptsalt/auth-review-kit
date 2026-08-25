@@ -1,0 +1,8 @@
+config/dynatrace.local.json
+review-kit/config/dynatrace.local.json
+_dynatrace/
+review-kit/_dynatrace/
+_smoke/
+__pycache__/
+*.pyc
+.DS_Store

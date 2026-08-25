@@ -1,0 +1,1271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identity Flight Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<style>
+/* ─── tokens ─────────────────────────────────────────────── */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --surface-2:#E9EDF3; --surface-3:#DFE5EE;
+  --ink:#131A24; --ink-2:#48566D; --ink-3:#6F7D94;
+  --line:#D4DBE5; --line-2:#BFC9D8;
+  --accent:#1B4F9C; --accent-2:#123A78; --accent-soft:#E3ECFA;
+  --ok:#136B41; --ok-soft:#DEF0E6;
+  --partial:#8A5D00; --partial-soft:#F8EBD2;
+  --missing:#A81F18; --missing-soft:#FAE3E1;
+  --crit:#8F1D18; --high:#A05300; --low:#136B41;
+  --shadow:0 1px 2px rgba(19,26,36,.06),0 8px 24px -12px rgba(19,26,36,.18);
+  --r:10px;
+  --f-display:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E141C; --surface:#151E29; --surface-2:#1C2734; --surface-3:#243141;
+    --ink:#E8EDF4; --ink-2:#AAB7C9; --ink-3:#7E8DA4;
+    --line:#2A3746; --line-2:#3A4A5D;
+    --accent:#79ADFF; --accent-2:#A6C8FF; --accent-soft:#16263E;
+    --ok:#5CCB90; --ok-soft:#12291F;
+    --partial:#E6B44A; --partial-soft:#2B2415;
+    --missing:#FF847B; --missing-soft:#2E1A19;
+    --crit:#FF8A80; --high:#FFB264; --low:#5CCB90;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E141C; --surface:#151E29; --surface-2:#1C2734; --surface-3:#243141;
+  --ink:#E8EDF4; --ink-2:#AAB7C9; --ink-3:#7E8DA4;
+  --line:#2A3746; --line-2:#3A4A5D;
+  --accent:#79ADFF; --accent-2:#A6C8FF; --accent-soft:#16263E;
+  --ok:#5CCB90; --ok-soft:#12291F;
+  --partial:#E6B44A; --partial-soft:#2B2415;
+  --missing:#FF847B; --missing-soft:#2E1A19;
+  --crit:#FF8A80; --high:#FFB264; --low:#5CCB90;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -14px rgba(0,0,0,.7);
+}
+
+/* ─── base ───────────────────────────────────────────────── */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:88px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:var(--f-body);font-size:15.5px;line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.22;letter-spacing:-.01em}
+p{margin:0}
+a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:2px}
+code,kbd{font-family:var(--f-mono);font-size:.87em;background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:.08em .38em;white-space:nowrap}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+/* ─── shell ──────────────────────────────────────────────── */
+.top{
+  position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--surface) 88%,transparent);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--line);
+}
+.top-in{max-width:1440px;margin:0 auto;padding:10px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px;margin-right:auto}
+.brand b{font-family:var(--f-display);font-weight:600;font-size:17px;letter-spacing:-.015em}
+.brand span{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
+.tabs{display:flex;gap:2px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:3px}
+.tab{
+  font-family:var(--f-mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+  background:none;border:0;color:var(--ink-2);padding:6px 13px;border-radius:6px;cursor:pointer;
+}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.icon-btn{
+  background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);
+  width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:15px;line-height:1;
+}
+.icon-btn:hover{color:var(--ink);border-color:var(--line-2)}
+.walker{
+  font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+  text-decoration:none;color:var(--accent);background:var(--accent-soft);
+  border:1px solid color-mix(in srgb,var(--accent) 32%,transparent);border-radius:8px;padding:7px 12px;
+}
+.walker:hover{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.meter{display:flex;align-items:center;gap:9px;font-family:var(--f-mono);font-size:11px;color:var(--ink-3)}
+.meter-bar{width:74px;height:5px;border-radius:3px;background:var(--surface-3);overflow:hidden}
+.meter-fill{height:100%;width:0;background:var(--accent);transition:width .3s}
+
+.shell{max-width:1440px;margin:0 auto;padding:0 22px;display:grid;grid-template-columns:246px minmax(0,1fr);gap:44px;align-items:start}
+@media (max-width:1020px){.shell{grid-template-columns:1fr;gap:0}.rail{display:none}}
+
+.rail{position:sticky;top:76px;max-height:calc(100vh - 92px);overflow-y:auto;padding:26px 0 40px}
+.rail h5{font-family:var(--f-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 9px;font-weight:500}
+.rail nav{display:flex;flex-direction:column;gap:1px;margin-bottom:22px}
+.rail a{
+  display:flex;gap:9px;align-items:baseline;padding:4px 9px;border-radius:6px;
+  color:var(--ink-2);text-decoration:none;font-size:13.5px;border-left:2px solid transparent;
+}
+.rail a:hover{background:var(--surface-2);color:var(--ink)}
+.rail a.on{background:var(--accent-soft);color:var(--accent);border-left-color:var(--accent);font-weight:500}
+.rail a i{font-family:var(--f-mono);font-style:normal;font-size:10.5px;color:var(--ink-3);min-width:22px}
+.rail a.on i{color:var(--accent)}
+
+main{padding:26px 0 100px;min-width:0}
+.panel[hidden]{display:none}
+
+/* ─── page head ──────────────────────────────────────────── */
+.phead{border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:34px}
+.phead h1{font-size:clamp(28px,4vw,38px);margin-bottom:10px}
+.phead p{color:var(--ink-2);max-width:68ch}
+.kicker{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:11px}
+
+/* ─── sections ───────────────────────────────────────────── */
+section{margin-bottom:52px;scroll-margin-top:88px}
+.shead{display:flex;align-items:flex-start;gap:14px;margin-bottom:16px;padding-bottom:11px;border-bottom:1px solid var(--line)}
+.snum{font-family:var(--f-mono);font-size:12px;color:var(--accent);padding-top:5px;min-width:34px;font-weight:500}
+.shead h2{font-size:21px;flex:1}
+.shead h3{font-size:17px;flex:1}
+.stack{display:flex;flex-direction:column;gap:15px}
+.prose{max-width:70ch;color:var(--ink-2)}
+.prose strong{color:var(--ink);font-weight:600}
+ol.steps{margin:0;padding-left:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:9px;max-width:74ch}
+ol.steps>li{counter-increment:s;position:relative;padding-left:34px;color:var(--ink-2)}
+ol.steps>li::before{
+  content:counter(s);position:absolute;left:0;top:1px;width:22px;height:22px;border-radius:6px;
+  background:var(--surface-2);border:1px solid var(--line);color:var(--ink-3);
+  font-family:var(--f-mono);font-size:11px;display:grid;place-items:center;
+}
+ol.steps ul{margin:6px 0 0;padding-left:17px;color:var(--ink-3);font-size:14.5px}
+ol.steps li strong{color:var(--ink)}
+ul.plain{margin:0;padding-left:19px;color:var(--ink-2);display:flex;flex-direction:column;gap:6px;max-width:74ch}
+ul.plain strong{color:var(--ink)}
+
+/* ─── done toggle ────────────────────────────────────────── */
+.done{display:inline-flex;align-items:center;gap:7px;font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);cursor:pointer;user-select:none;white-space:nowrap;padding-top:6px}
+.done input{accent-color:var(--accent);width:14px;height:14px;cursor:pointer;margin:0}
+.done:has(input:checked){color:var(--ok)}
+
+/* ─── cards & callouts ───────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:17px 19px}
+.grid{display:grid;gap:13px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;padding:13px 17px;max-width:74ch}
+.note .lbl,.evidence .lbl,.warn .lbl{font-family:var(--f-mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;display:block;margin-bottom:5px;font-weight:500}
+.note .lbl{color:var(--accent)}
+.note p{color:var(--ink-2);font-size:14.5px}
+.note strong{color:var(--ink)}
+
+.evidence{border-left:3px solid var(--ok);background:var(--ok-soft);border-radius:0 8px 8px 0;padding:13px 17px;font-size:14.5px;color:var(--ink-2)}
+.evidence .lbl{color:var(--ok)}
+.warn{border-left:3px solid var(--partial);background:var(--partial-soft);border-radius:0 8px 8px 0;padding:13px 17px;font-size:14.5px;color:var(--ink-2)}
+.warn .lbl{color:var(--partial)}
+.evidence code,.warn code,.note code{background:color-mix(in srgb,var(--surface) 60%,transparent)}
+.evidence ul,.warn ul{margin:7px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+
+.model{
+  background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);
+  border-radius:0 var(--r) var(--r) 0;padding:20px 24px;box-shadow:var(--shadow);
+}
+.model p{font-family:var(--f-display);font-size:18px;line-height:1.5;color:var(--ink)}
+
+/* ─── tables ─────────────────────────────────────────────── */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th{
+  text-align:left;font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:500;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap;
+}
+td{padding:10px 14px;border-bottom:1px solid var(--line);color:var(--ink-2);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--surface-2)}
+td strong,td b{color:var(--ink);font-weight:600}
+td.mono,.mono{font-family:var(--f-mono);font-size:12.5px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ─── status pills ───────────────────────────────────────── */
+.pill{
+  display:inline-flex;align-items:center;gap:5px;font-family:var(--f-mono);font-size:10.5px;
+  letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:20px;border:1px solid;white-space:nowrap;font-weight:500;
+}
+.p-ok{color:var(--ok);background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 35%,transparent)}
+.p-partial{color:var(--partial);background:var(--partial-soft);border-color:color-mix(in srgb,var(--partial) 35%,transparent)}
+.p-missing{color:var(--missing);background:var(--missing-soft);border-color:color-mix(in srgb,var(--missing) 35%,transparent)}
+.p-crit{color:var(--crit);background:var(--missing-soft);border-color:color-mix(in srgb,var(--crit) 45%,transparent);font-weight:600}
+.p-high{color:var(--high);background:var(--partial-soft);border-color:color-mix(in srgb,var(--high) 35%,transparent)}
+.p-low{color:var(--low);background:var(--ok-soft);border-color:color-mix(in srgb,var(--low) 35%,transparent)}
+
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px}
+.chip{
+  font-family:var(--f-mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
+  background:var(--surface);border:1px solid var(--line);color:var(--ink-2);
+  padding:5px 11px;border-radius:20px;cursor:pointer;
+}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+
+/* ─── sequence diagrams ──────────────────────────────────── */
+.dia{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:0;overflow-x:auto}
+.dia-cap{
+  font-family:var(--f-mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);
+  padding:10px 16px;border-bottom:1px solid var(--line);background:var(--surface-2);border-radius:var(--r) var(--r) 0 0;
+}
+.seq{position:relative;padding:14px 16px 18px;min-width:560px}
+.seq-row{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));align-items:center;position:relative;z-index:2}
+.actors{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:6px;margin-bottom:12px;position:relative;z-index:2}
+.actor{
+  background:var(--surface-2);border:1px solid var(--line-2);border-radius:7px;
+  padding:7px 5px;text-align:center;font-family:var(--f-mono);font-size:11px;color:var(--ink);font-weight:500;line-height:1.3;
+}
+.lifelines{position:absolute;left:16px;right:16px;top:56px;bottom:18px;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));z-index:1;pointer-events:none}
+.lifelines i{display:block;justify-self:center;width:0;height:100%;border-left:1px dashed var(--line-2)}
+.msg{grid-column:var(--from)/calc(var(--to) + 1);display:flex;flex-direction:column;align-items:stretch;padding:9px 4px 3px}
+.msg em{
+  font-style:normal;font-size:12px;color:var(--ink-2);text-align:center;line-height:1.35;
+  margin-bottom:3px;padding:0 4px;background:var(--surface);
+}
+.arrow{display:flex;align-items:center;gap:0;height:9px}
+.arrow s{flex:1;height:0;border-top:1.5px solid var(--ink-3);text-decoration:none}
+.arrow.dashed s{border-top-style:dashed}
+.arrow b{
+  width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;
+}
+.arrow.r b{border-left:7px solid var(--ink-3);margin-left:-1px}
+.arrow.l b{border-right:7px solid var(--ink-3);margin-right:-1px;order:-1}
+.msg.self{padding:7px 4px}
+.msg.self em{text-align:left;padding-left:14px;position:relative}
+.msg.self em::before{content:"↻";position:absolute;left:0;color:var(--accent);font-size:13px}
+.msg.hl em{background:var(--accent-soft);color:var(--ink);border-radius:5px;padding:3px 8px;font-weight:500}
+.frame{outline:1px dashed var(--line-2);outline-offset:0;padding:22px 0 6px;margin:9px 0;position:relative;border-radius:4px}
+.frame>.flabel{
+  position:absolute;top:0;left:0;background:var(--surface-2);border:1px solid var(--line-2);border-top:0;border-left:0;
+  border-radius:0 0 6px 0;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  padding:2px 9px;color:var(--ink-3);
+}
+.frame>.fcond{font-family:var(--f-mono);font-size:10.5px;color:var(--ink-3);text-align:center;padding:2px 0 5px;position:relative;z-index:2}
+.frame .fdiv{border-top:1px dashed var(--line-2);margin:7px 0 0}
+.seqnote{
+  grid-column:1/-1;text-align:center;font-family:var(--f-mono);font-size:10.5px;color:var(--ink-3);
+  padding:6px 0;background:var(--surface);position:relative;z-index:2;
+}
+.seqnote.mark{background:var(--partial-soft);color:var(--partial);border-radius:5px;padding:5px 10px;margin:5px auto;display:inline-block;justify-self:center}
+
+/* ─── flow / state diagrams ──────────────────────────────── */
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:9px;padding:16px}
+.node{
+  background:var(--surface-2);border:1px solid var(--line-2);border-radius:7px;padding:8px 12px;
+  font-family:var(--f-mono);font-size:11.5px;color:var(--ink);text-align:center;line-height:1.35;
+}
+.node.dec{border-radius:20px;border-style:dashed;color:var(--ink-2)}
+.node.term{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:500}
+.node.bad{background:var(--missing-soft);border-color:color-mix(in srgb,var(--missing) 40%,transparent);color:var(--missing)}
+.to{color:var(--ink-3);font-family:var(--f-mono);font-size:11px;display:flex;flex-direction:column;align-items:center;gap:1px}
+.to span{font-size:9.5px;letter-spacing:.05em}
+.branch{display:flex;flex-direction:column;gap:9px;border-left:1px dashed var(--line-2);padding-left:13px}
+.branch-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+
+/* tiers diagram */
+.tiers{display:grid;gap:11px;padding:16px}
+.tier{border:1px solid var(--line);border-radius:9px;padding:12px 14px;background:var(--surface-2)}
+.tier h6{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 9px;font-weight:500}
+.tier .row{display:flex;gap:8px;flex-wrap:wrap}
+.box{background:var(--surface);border:1px solid var(--line-2);border-radius:7px;padding:7px 11px;font-family:var(--f-mono);font-size:11.5px;color:var(--ink)}
+.box.key{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:500}
+.box small{display:block;font-family:var(--f-body);font-size:10.5px;color:var(--ink-3);font-weight:400;margin-top:2px}
+
+/* ─── drill cards ────────────────────────────────────────── */
+.drill{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(310px,1fr))}
+.dcard{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:0;
+  text-align:left;cursor:pointer;font:inherit;color:inherit;overflow:hidden;transition:border-color .15s,box-shadow .15s;
+}
+.dcard:hover{border-color:var(--line-2);box-shadow:var(--shadow)}
+.dcard-q{padding:15px 17px;display:flex;flex-direction:column;gap:7px}
+.dcard-q .lbl{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--missing)}
+.dcard-q b{font-size:15px;font-weight:600;color:var(--ink);line-height:1.4}
+.dcard-a{display:none;padding:14px 17px;border-top:1px dashed var(--line-2);background:var(--surface-2);font-size:14px;color:var(--ink-2)}
+.dcard[aria-expanded="true"] .dcard-a{display:block}
+.dcard-a .ref{display:block;margin-top:8px;font-family:var(--f-mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.05em}
+.dcard-hint{font-family:var(--f-mono);font-size:9.5px;color:var(--ink-3);letter-spacing:.1em;text-transform:uppercase}
+.dcard[aria-expanded="true"] .dcard-hint{color:var(--accent)}
+
+/* ─── module list (plan) ─────────────────────────────────── */
+.mod{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;gap:14px;align-items:flex-start}
+.mod-n{font-family:var(--f-mono);font-size:11px;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:4px 8px;min-width:38px;text-align:center;font-weight:500}
+.mod-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+.mod-b h4{font-size:16px}
+.mod-b p{font-size:14px;color:var(--ink-2)}
+.mod-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:2px}
+.tag{font-family:var(--f-mono);font-size:10px;letter-spacing:.05em;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-3);padding:2px 7px;border-radius:5px}
+.tag.rfc{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 35%,transparent);background:var(--accent-soft)}
+.ask{border-top:1px dashed var(--line-2);padding-top:8px;margin-top:2px;font-size:13.5px;color:var(--ink-2)}
+.ask b{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:3px;font-weight:500}
+
+footer{border-top:1px solid var(--line);margin-top:60px;padding:22px 0 0;color:var(--ink-3);font-size:13px;max-width:74ch}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><b>Identity Flight Deck</b><span>Atlas · Release 3</span></div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-panel="arch">Architecture</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="drill">Drill</button>
+      <button class="tab" role="tab" aria-selected="false" data-panel="plan">Study plan</button>
+    </div>
+    <a class="walker" href="explainer.html">Trace Walker →</a>
+    <div class="meter"><span class="meter-bar"><span class="meter-fill" id="mfill"></span></span><span id="mtxt">0 / 0</span></div>
+    <button class="icon-btn" id="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+  </div>
+</header>
+
+<div class="shell">
+
+  <aside class="rail">
+    <h5>Architecture</h5>
+    <nav id="nav">
+      <a href="#s1"><i>§1</i>Cast &amp; topology</a>
+      <a href="#s21"><i>§2.1</i>OAuth2 code flow</a>
+      <a href="#s22"><i>§2.2</i>PKCE</a>
+      <a href="#s23"><i>§2.3</i>DPoP</a>
+      <a href="#s24"><i>§2.4</i>Token types</a>
+      <a href="#s3"><i>§3</i>Login</a>
+      <a href="#s4"><i>§4</i>Remember Me</a>
+      <a href="#s5"><i>§5</i>Biometric</a>
+      <a href="#s6"><i>§6</i>Session &amp; logout</a>
+      <a href="#s7"><i>§7</i>Step-up (HRT)</a>
+      <a href="#s8"><i>§8</i>SSO family</a>
+      <a href="#s9"><i>§9</i>User ID conversion</a>
+      <a href="#s10"><i>§10</i>POA &amp; reset</a>
+      <a href="#s11"><i>§11</i>Glossary</a>
+      <a href="#s12"><i>§12</i>Review heuristics</a>
+      <a href="#sa"><i>A</i>Concept → code</a>
+      <a href="#sb"><i>B</i>Vulnerabilities</a>
+    </nav>
+    <h5>Recall</h5>
+    <nav>
+      <a href="#para"><i>★</i>The one paragraph</a>
+    </nav>
+  </aside>
+
+  <main>
+
+  <!-- ══════════════ ARCHITECTURE ══════════════ -->
+  <div class="panel" id="arch">
+
+    <div class="phead">
+      <div class="kicker">Reconstructed reference · 2026-08-22</div>
+      <h1>Identity Modernization, Release 3</h1>
+      <p>The complete login and session architecture — OAuth2, PKCE, DPoP, step-up, and logout — laid over the code that actually implements it. Every claim carries an evidence marker: <span class="pill p-ok">verified</span> <span class="pill p-partial">partial</span> <span class="pill p-missing">needs evidence</span>. Source: <code>04-identity-r3-architecture-explainer.md</code>.</p>
+    </div>
+
+    <div class="model" style="margin-bottom:44px">
+      <div class="kicker" style="margin-bottom:8px">The mental model</div>
+      <p>Atlas UI never talks to the vault directly for security decisions. Password check, biometric check, token issuance, DPoP validation, fraud scoring — all of it goes through <strong>Sentinel</strong>. Atlas BFF and Gateway deal only in <em>business</em> data — <strong>but Gateway still enforces token and DPoP validity on every single call.</strong></p>
+    </div>
+
+    <!-- §1 -->
+    <section id="s1">
+      <div class="shead"><span class="snum">§1</span><h2>The cast of characters</h2><label class="done"><input type="checkbox" data-k="s1">done</label></div>
+      <div class="stack">
+        <div class="tw"><table>
+          <thead><tr><th>Component</th><th>Plain-language role</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Atlas UI</strong></td><td>The online/mobile banking web app the customer sees (React/Angular SPA).</td></tr>
+            <tr><td><strong>AuthKit MFE</strong><br><span class="mono">authkit-mfe</span></td><td>Shared micro-frontend federated into Atlas. Owns the actual "enter password / biometric / OTP" screens and talks to Sentinel.</td></tr>
+            <tr><td><strong>Sentinel IdP</strong><br><span class="mono">credential-auth-service</span></td><td>The <strong>Identity Provider</strong> — the IdP platform. Issues tokens, validates passwords/biometrics, enforces DPoP, talks to fraud engines. <em>The bank vault's front desk.</em></td></tr>
+            <tr><td><strong>Atlas BFF</strong></td><td>Backend-for-frontend. Holds the customer's <strong>application session</strong> (not the security token) — account summary caching, business rules.</td></tr>
+            <tr><td><strong>Edge Gateway</strong></td><td>API gateway in front of business APIs. Validates DPoP proofs, enforces step-up policy for high-risk transactions.</td></tr>
+            <tr><td><strong>Directory</strong></td><td>LDAP-style credential store — where usernames, passwords and aliases actually live.</td></tr>
+            <tr><td><strong>GridCache</strong></td><td>In-memory data grid used to speed up login (prefetching account data).</td></tr>
+            <tr><td><strong>EventBus</strong></td><td>Kafka-like event bus. Every login / logout / step-up / fraud event is published here.</td></tr>
+            <tr><td><strong>RiskEngine / risk vendors</strong></td><td>Fraud &amp; risk engines that score a login or transaction low / medium / high.</td></tr>
+            <tr><td><strong>Warehouse / IdP Datamart / Splunk</strong></td><td>Where events end up for reporting, monitoring and audit.</td></tr>
+          </tbody>
+        </table></div>
+
+        <div class="dia">
+          <div class="dia-cap">Topology — three tiers, one hard security boundary</div>
+          <div class="tiers">
+            <div class="tier"><h6>Client tier</h6><div class="row">
+              <span class="box">Customer</span><span class="box">Atlas UI<small>SPA, holds tokens in memory</small></span><span class="box">AuthKit MFE MFE<small>owns credential screens</small></span>
+            </div></div>
+            <div class="tier"><h6>Identity &amp; gateway tier — every security decision happens here</h6><div class="row">
+              <span class="box key">Sentinel / Sentinel<small>IdP: /auth /authorize /token /logout</small></span>
+              <span class="box key">Edge Gateway<small>DPoP validation + step-up policy</small></span>
+              <span class="box">Atlas BFF<small>application session</small></span>
+              <span class="box">RiskEngine / risk vendors<small>risk scoring</small></span>
+            </div></div>
+            <div class="tier"><h6>Data &amp; event tier</h6><div class="row">
+              <span class="box">Directory<small>credential directory</small></span><span class="box">GridCache<small>prefetch cache</small></span><span class="box">EventBus<small>event bus</small></span><span class="box">IdP Datamart · Warehouse · Splunk<small>audit &amp; reporting</small></span>
+            </div></div>
+          </div>
+        </div>
+
+        <div class="note"><span class="lbl">Architect note — the two-session split</span>
+          <p>There are <strong>two</strong> sessions here, and conflating them produces most bad findings: the <strong>security session</strong> owned by Sentinel (tokens, grants, token cache), and the <strong>application session</strong> owned by Atlas BFF (<code>/initAppSession</code>, account summary). They are tied together only by the <code>IDP_Correlation_ID</code> BFF stores. Ending one does not end the other — which is exactly why §6.3 makes the UI call <em>both</em> and clear locally regardless.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- §2.1 -->
+    <section id="s21">
+      <div class="shead"><span class="snum">§2.1</span><h2>OAuth2 authorization code flow</h2><label class="done"><input type="checkbox" data-k="s21">done</label></div>
+      <div class="stack">
+        <p class="prose">Think of it as a hotel key card. You <strong>prove who you are at the front desk</strong> (<code>/authorize</code>). The desk doesn't hand you the key card — it hands you a <strong>temporary claim ticket</strong> (the authorization code). You take that to the back office (<code>/token</code>) and trade it for the real <strong>key card</strong> (access token) plus a <strong>spare key request slip</strong> (refresh token). The key card opens your room until it expires; the slip gets you a new one without checking in again.</p>
+
+        <div class="dia">
+          <div class="dia-cap">Sequence — code flow and where each token lands</div>
+          <div class="seq" style="--n:3">
+            <div class="actors"><span class="actor">Customer</span><span class="actor">Atlas UI (browser)</span><span class="actor">Sentinel</span></div>
+            <div class="lifelines"><i></i><i></i><i></i></div>
+            <div class="seq-row"><div class="msg" style="--from:1;--to:2"><em>Enter card</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:2;--to:3"><em>/authorize — proves identity</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:2;--to:3"><em>Authorization code (temporary claim ticket)</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:2;--to:3"><em>/token — trade code for tokens</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:2;--to:3"><em>Access token + Refresh token</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg hl self" style="--from:2;--to:2"><em>Access token → memory only</em></div></div>
+            <div class="seq-row"><div class="msg hl self" style="--from:2;--to:2"><em>Refresh token → session storage</em></div></div>
+          </div>
+        </div>
+
+        <div class="grid g3">
+          <div class="card"><div class="kicker">Access token</div><p class="mono" style="color:var(--ink)">memory only</p><p style="font-size:13.5px;color:var(--ink-3);margin-top:5px">Not localStorage — reduces theft via XSS.</p></div>
+          <div class="card"><div class="kicker">Refresh token</div><p class="mono" style="color:var(--ink)">sessionStorage</p><p style="font-size:13.5px;color:var(--ink-3);margin-top:5px">Survives reload, dies with the tab.</p></div>
+          <div class="card"><div class="kicker">DPoP private key</div><p class="mono" style="color:var(--ink)">IndexedDB *</p><p style="font-size:13.5px;color:var(--ink-3);margin-top:5px">* the code is stronger — see §2.3.</p></div>
+        </div>
+
+        <div class="evidence"><span class="lbl">In our repos — atlas-ui</span>
+          <ul>
+            <li>Token store split is real: access token in memory, everything else in <code>sessionStorage</code> — <code>hybrid-token-storage.service.ts#L13-L58</code>.</li>
+            <li><code>/token</code> code exchange: <code>auth.service.ts#L280-L285</code> (<code>exchangeTokensFromCode</code>).</li>
+            <li>SDK-side <code>/token</code> POST attaching the <code>code_verifier</code>: <code>oauth2.ts#L47</code>.</li>
+          </ul>
+        </div>
+        <div class="warn"><span class="lbl">Watch</span>
+          The ID token is parsed with <code>jwt_decode</code> and <strong>never signature-verified on the client</strong> (<code>auth.service.ts#L979</code>). Acceptable for a token received directly over TLS — <strong>but critical on the server side</strong>, where <code>id_token_hint</code> is decoded without verification. See Appendix B row 1.
+        </div>
+      </div>
+    </section>
+
+    <!-- §2.2 -->
+    <section id="s22">
+      <div class="shead"><span class="snum">§2.2</span><h2>PKCE — the acronym the doc never spells out</h2><label class="done"><input type="checkbox" data-k="s22">done</label></div>
+      <div class="stack">
+        <p class="prose">The doc says Sentinel <em>"validates code verifier &amp; returns access &amp; refresh tokens."</em> That is <strong>PKCE</strong> — Proof Key for Code Exchange. It exists because a browser app is a <strong>public client</strong>: it has no secret it can hide. Without protection, an attacker who intercepts the authorization code (malicious redirect, OS-level URL hijack on mobile) could trade it for tokens themselves.</p>
+
+        <div class="dia">
+          <div class="dia-cap">Sequence — commit to a hash, redeem with the secret</div>
+          <div class="seq" style="--n:2">
+            <div class="actors"><span class="actor">Atlas UI (browser)</span><span class="actor">Sentinel</span></div>
+            <div class="lifelines"><i></i><i></i></div>
+            <div class="seq-row"><div class="msg hl self" style="--from:1;--to:1"><em>Generate random code_verifier</em></div></div>
+            <div class="seq-row"><div class="msg hl self" style="--from:1;--to:1"><em>code_challenge = SHA-256(code_verifier)</em></div></div>
+            <div class="seq-row"><div class="msg" style="--from:1;--to:2"><em>/authorize — code_challenge only, never the verifier</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:1;--to:2"><em>Authorization code</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:1;--to:2"><em>/token — authorization code + code_verifier</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg hl self" style="--from:2;--to:2"><em>Re-hash verifier, compare to stored challenge</em></div></div>
+            <div class="frame"><span class="flabel">alt</span>
+              <div class="fcond">[hashes match]</div>
+              <div class="seq-row"><div class="msg" style="--from:1;--to:2"><em>Access + refresh tokens issued</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+              <div class="fdiv"></div>
+              <div class="fcond">[hashes don't match — stolen code, no verifier]</div>
+              <div class="seq-row"><div class="msg" style="--from:1;--to:2"><em>Reject — invalid_grant</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="note"><span class="lbl">The boundary most people get wrong</span>
+          <p>PKCE protects <strong>the code exchange</strong>. It does <strong>not</strong> protect the integrity of the <code>/authorize</code> request parameters. That is why the <code>alg:none</code> request object below is still a real finding <em>even though PKCE is implemented correctly</em>. Being able to draw that line is what separates a reviewer from an operator.</p>
+        </div>
+
+        <div class="evidence"><span class="lbl">In our repos — atlas-ui</span>
+          PKCE is genuinely implemented — <code>generateCodeVerifier()</code> (96-char base64url) and <code>generateCodeChallenge()</code> (SHA-256) at <code>auth.service.ts#L892-L910</code>; codes cleared on logout via <code>clearAllPkceCodes</code> (<code>#L811-L813</code>).
+        </div>
+        <div class="warn"><span class="lbl">Real finding — request object integrity</span>
+          The <code>/authorize</code> request object is sent as an <strong><code>alg:none</code> unsigned JWT</strong> (<code>auth.utils.service.ts#L21-L24</code>) and <strong>Sentinel is configured to accept it</strong> — <code>request_object_signing_alg: none</code> for <code>spapublicclient</code>/<code>spamobileclient</code> in <code>clients.j2#L25</code>. Request parameters aren't integrity-protected. The newer <code>idp_v2</code> template already uses <strong>RS256</strong> — a config drift worth flagging.
+        </div>
+        <div class="warn"><span class="lbl">Finding heuristic</span>
+          Flag any repo that builds an authorization request <em>without</em> a challenge/verifier pair, <strong>reuses</strong> a verifier across sessions, or <strong>logs</strong> the verifier anywhere (Splunk, EventBus). Each defeats PKCE entirely.
+        </div>
+      </div>
+    </section>
+
+    <!-- §2.3 -->
+    <section id="s23">
+      <div class="shead"><span class="snum">§2.3</span><h2>DPoP — Demonstration of Proof-of-Possession</h2><label class="done"><input type="checkbox" data-k="s23">done</label></div>
+      <div class="stack">
+        <p class="prose"><strong>The problem:</strong> a plain OAuth access token is a <em>bearer</em> token — whoever holds it can spend it, like cash. If it leaks via XSS, a log, or a MITM, the attacker replays it from anywhere until it expires. <strong>The fix:</strong> DPoP staples the token to a specific browser's private key — a boarding pass only your passport can validate. <span class="mono" style="color:var(--ink-3)">RFC 9449</span></p>
+
+        <div class="dia">
+          <div class="dia-cap">The proof JWT — what each claim is for</div>
+          <div class="tiers"><div class="tier"><h6>DPoP header — one freshly signed JWT per request</h6><div class="row">
+            <span class="box key">htm<small>HTTP method — binds proof to the verb</small></span>
+            <span class="box key">htu<small>Target URL — stops cross-endpoint reuse</small></span>
+            <span class="box key">iat<small>Issued-at — checked against a 60s window</small></span>
+            <span class="box key">jti<small>Unique nonce — replay detection within the window</small></span>
+            <span class="box key">ath<small>SHA-256 of the access token — pins proof to that token</small></span>
+          </div></div></div>
+        </div>
+
+        <div class="dia">
+          <div class="dia-cap">Sequence — proof generated and verified on every call</div>
+          <div class="seq" style="--n:2">
+            <div class="actors"><span class="actor">Atlas UI (browser)</span><span class="actor">Sentinel / Gateway</span></div>
+            <div class="lifelines"><i></i><i></i></div>
+            <div class="seq-row"><div class="msg hl self" style="--from:1;--to:1"><em>On login: generate public/private key pair (SubtleCrypto)</em></div></div>
+            <div class="seq-row"><div class="msg hl self" style="--from:1;--to:1"><em>Private key stored on device, never transmitted</em></div></div>
+            <div class="frame"><span class="flabel">loop</span>
+              <div class="fcond">[every API / token call]</div>
+              <div class="seq-row"><div class="msg hl self" style="--from:1;--to:1"><em>Build proof JWT: htm, htu, iat, jti, ath — sign with private key</em></div></div>
+              <div class="seq-row"><div class="msg" style="--from:1;--to:2"><em>Request + Authorization: Bearer &lt;token&gt; + DPoP: &lt;proof&gt;</em><span class="arrow r"><s></s><b></b></span></div></div>
+              <div class="seq-row"><div class="msg hl self" style="--from:2;--to:2"><em>Verify proof signature with bound public key</em></div></div>
+              <div class="fdiv"></div>
+              <div class="fcond">[iat within 60s window and method/URL match]</div>
+              <div class="seq-row"><div class="msg" style="--from:1;--to:2"><em>200 OK</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+              <div class="fdiv"></div>
+              <div class="fcond">[stale or replayed proof]</div>
+              <div class="seq-row"><div class="msg" style="--from:1;--to:2"><em>401 reject — possible replay</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="note"><span class="lbl">Where it shows up in findings territory</span>
+          <p><strong>1.</strong> <code>HttpAdapter</code> classes in HUB repos must attach a <em>freshly generated</em> proof per call, never a cached one. <strong>2.</strong> The 60-second window is enforced in <strong>two places independently</strong> — Sentinel and Gateway — so <em>divergence between them is itself the finding</em>. <strong>3.</strong> The UI must clear the DPoP key pair on logout <em>and</em> on any token-alteration error; a forgotten path leaves a stale key reusable after logout.</p>
+        </div>
+
+        <div class="evidence"><span class="lbl">In our repos — atlas-ui</span>
+          <ul>
+            <li>Proof JWT (<code>htm</code>, <code>htu</code>, <code>iat</code>, <code>jti</code>, <code>ath</code>) built and signed <strong>per call</strong> — <code>auth.service.ts#L1160-L1195</code>.</li>
+            <li><strong>The private key never enters JS.</strong> Signing is delegated to a native Biometric DPoP plugin (<code>createDpopKey</code>/<code>signDpop</code>/<code>deleteDpopKey</code>) — <code>#L73-L77</code>, lifecycle <code>#L815-L850</code>. Key material sits in the <strong>OS keystore, not IndexedDB</strong> — stronger than the source doc claims.</li>
+            <li>A <strong>DPoP lifecycle lock</strong> (<code>#L1178-L1200</code>) stops concurrent calls minting multiple key namespaces.</li>
+          </ul>
+        </div>
+        <div class="warn"><span class="lbl">Gaps to verify</span>
+          The client sets <code>iat</code>, but the <strong>60-second window is enforced server-side</strong> — in Sentinel/Gateway config <strong>not present in these repos</strong>. The doc's claim that Sentinel and Gateway enforce it independently <strong>cannot be verified here</strong>: treat any replay-window finding as <strong>NEEDS-EVIDENCE</strong>. Open question worth chasing: is there a <code>jti</code> replay cache at all, or only an <code>iat</code> check?
+        </div>
+      </div>
+    </section>
+
+    <!-- §2.4 -->
+    <section id="s24">
+      <div class="shead"><span class="snum">§2.4</span><h2>Token types — the lifecycle map</h2><label class="done"><input type="checkbox" data-k="s24">done</label></div>
+      <div class="stack">
+        <div class="tw"><table>
+          <thead><tr><th>Token</th><th>Lives where</th><th>Purpose</th><th>Lifetime</th></tr></thead>
+          <tbody>
+            <tr><td><strong>ID token</strong></td><td class="mono">not persisted</td><td>Proves <em>who</em> the user is (claims incl. masked logon ID)</td><td>Short-lived, one use per login</td></tr>
+            <tr><td><strong>Access token</strong></td><td class="mono">browser memory</td><td>Calls Atlas APIs; <strong>DPoP-bound</strong></td><td>Minutes; refreshed 15s before expiry</td></tr>
+            <tr><td><strong>Refresh token</strong></td><td class="mono">sessionStorage</td><td>New access token without re-login; also powers NativeMFA biometric re-auth</td><td>Longer, tied to session</td></tr>
+            <tr><td><strong>Remember Me</strong></td><td class="mono">device (cookie/local)</td><td>Pre-fills username/card next visit; legacy + new Sentinel format</td><td>Long-lived, device-scoped</td></tr>
+            <tr><td><strong>DPoP key pair</strong></td><td class="mono">OS keystore</td><td>Proves possession of the token</td><td>Session-scoped</td></tr>
+          </tbody>
+        </table></div>
+        <div class="note"><span class="lbl">Why this table is the first thing you reach for</span><p>Per §12: any finding mentioning "token", "session" or "DPoP" starts here — <strong>identify which of the lifecycles it touches</strong>, because the storage location and the expected cleanup rules differ for every row.</p></div>
+      </div>
+    </section>
+
+    <!-- §3 -->
+    <section id="s3">
+      <div class="shead"><span class="snum">§3</span><h2>Login — UC.3-1.1.1</h2><label class="done"><input type="checkbox" data-k="s3">done</label></div>
+      <div class="stack">
+        <p class="prose"><strong>Simple version:</strong> customer enters card number or User ID + password (or biometric); the app proves this to Sentinel, gets tokens, then tells Atlas BFF "start my session," and BFF loads account data.</p>
+        <ol class="steps">
+          <li>Atlas UI collects the credential and <strong>encrypts it client-side</strong> before sending to AuthKit MFE, which forwards to Sentinel's <code>/auth</code>.</li>
+          <li>Sentinel calls <strong>CredentialAuthentication</strong> to validate the password against Directory.<ul><li>If login is by <strong>User ID</strong>, Sentinel calls <strong>Credential Management Service</strong> to resolve the card number and transaction CIF ID, tagged <code>x_proxy_cardnumber</code> / <code>x_transaction_cifID</code>.</li></ul></li>
+          <li>Sentinel publishes a <strong>password validation event</strong> to EventBus — this drives the §4 prefetch.</li>
+          <li>Sentinel returns an <strong>authorization code + callback URL</strong> to AuthKit MFE.</li>
+          <li>Atlas SPA calls <code>/authorize</code> with that code; Sentinel validates the <strong>PKCE verifier</strong> and returns <strong>access + refresh tokens</strong>.</li>
+          <li>Sentinel pushes sign-in success/failure/attempt events — including <strong>RiskEngine fraud results</strong> from the risk vendors — to the SignIn event topic.</li>
+          <li>Atlas UI generates the <strong>DPoP key pair</strong> and signs every call from here on.</li>
+          <li>Atlas UI calls <code>/initAppSession</code> on Atlas BFF to start the <em>application</em> session. BFF stores <code>IDP_Correlation_ID</code>, retrieves the credential record from Directory, loads the account summary (GridCache if prefetched), and writes <code>AuthEvents.App.LoginSuccess</code>/<code>LoginFailure</code>.</li>
+        </ol>
+
+        <div class="dia">
+          <div class="dia-cap">Sequence — full login, end to end</div>
+          <div class="seq" style="--n:7">
+            <div class="actors"><span class="actor">Customer</span><span class="actor">Atlas UI</span><span class="actor">AuthKit</span><span class="actor">Sentinel</span><span class="actor">Directory</span><span class="actor">EventBus</span><span class="actor">Atlas BFF</span></div>
+            <div class="lifelines"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="seq-row"><div class="msg" style="--from:1;--to:2"><em>Enter card</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:2;--to:3"><em>Encrypted credential</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:3;--to:4"><em>/auth</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:4;--to:5"><em>Validate password</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:4;--to:5"><em>Valid</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+            <div class="frame"><span class="flabel">opt</span><div class="fcond">[login by User ID]</div>
+              <div class="seq-row"><div class="msg self" style="--from:4;--to:4"><em>Look up card + CIF</em></div></div>
+            </div>
+            <div class="seq-row"><div class="msg" style="--from:4;--to:6"><em>Publish password-validation event (login optimization)</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:3;--to:4"><em>Authorization code + callback URL</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:3;--to:4"><em>/authorize (code + PKCE code_verifier)</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:3;--to:4"><em>Access token + Refresh token</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:4;--to:6"><em>Publish SignIn success/failure/attempt (+ RiskEngine fraud results)</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:2;--to:3"><em>Tokens</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg hl self" style="--from:2;--to:2"><em>Generate DPoP key pair, start signing calls</em></div></div>
+            <div class="seq-row"><div class="msg" style="--from:2;--to:7"><em>/initAppSession (Gateway routed)</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:5;--to:7"><em>Retrieve credential record</em><span class="arrow l"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:2;--to:7"><em>Account summary (from GridCache if pre-fetched)</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:6;--to:7"><em>LoginSuccess / LoginFailure event</em><span class="arrow l"><s></s><b></b></span></div></div>
+          </div>
+        </div>
+
+        <div class="card"><div class="kicker">Also enforced (legacy behaviour carried into R3)</div>
+          <ul class="plain" style="margin-top:8px"><li><strong>Password Lock</strong> (soft) and <strong>OTP Lock</strong> (hard) after repeated failures.</li><li>Small-business customer role / business-category checks.</li><li>Login timestamp tracking.</li></ul>
+        </div>
+
+        <div class="evidence"><span class="lbl">In our repos</span>
+          <ul>
+            <li>Client-side credential encryption is real — RSA public-key import + AES key generation, <code>payload-encryption.service.ts#L86-L115</code>.</li>
+            <li>MFE step-up authorize (change password / login-id / MFA): <code>authentication.service.ts#L289-L302</code>.</li>
+            <li>EventBus publishing: <code>PublishProducerEventService.java#L36-L46</code>; topic constants <code>CommonConstants.java#L71-L87</code>.</li>
+          </ul>
+        </div>
+        <div class="warn"><span class="lbl">Watch</span> The MFE step-up authorize <strong>also</strong> uses an <code>alg:none</code> unsigned JWT — same class as §2.2. <code>/initAppSession</code> (Atlas BFF) is <strong>not</strong> in the repos we have.</div>
+      </div>
+    </section>
+
+    <!-- §4 -->
+    <section id="s4">
+      <div class="shead"><span class="snum">§4</span><h2>Remember Me &amp; login optimization</h2><label class="done"><input type="checkbox" data-k="s4">done</label></div>
+      <div class="stack">
+        <p class="prose"><strong>Remember Me:</strong> a device token says "this browser logged in as user X before," so Atlas pre-fills the username field. R3 supports <strong>two formats</strong> — legacy and the new Sentinel format — and a legacy token is <strong>silently migrated</strong> without the customer noticing.</p>
+        <p class="prose"><strong>Login optimization:</strong> don't make the customer wait for account data <em>after</em> authenticating — start fetching the moment the password is confirmed, in parallel with the rest of the auth flow.</p>
+
+        <div class="dia">
+          <div class="dia-cap">Sequence — prefetch starts at the earliest trust point</div>
+          <div class="seq" style="--n:5">
+            <div class="actors"><span class="actor">Sentinel</span><span class="actor">EventBus</span><span class="actor">profile-service</span><span class="actor">GridCache</span><span class="actor">Atlas BFF</span></div>
+            <div class="lifelines"><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="seq-row"><div class="msg hl self" style="--from:1;--to:1"><em>Password validated — earliest trust point</em></div></div>
+            <div class="seq-row"><div class="msg" style="--from:1;--to:2"><em>Publish login-optimization event (+ userLang)</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:2;--to:3"><em>Deliver event</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="frame"><span class="flabel">alt</span>
+              <div class="fcond">[credit-card login]</div>
+              <div class="seq-row"><div class="msg self" style="--from:3;--to:3"><em>Ignore — not eligible</em></div></div>
+              <div class="fdiv"></div>
+              <div class="fcond">[debit / User ID login]</div>
+              <div class="seq-row"><div class="msg self" style="--from:3;--to:3"><em>Prefetch customer profile info</em></div></div>
+              <div class="seq-row"><div class="msg" style="--from:3;--to:4"><em>Store in cache</em><span class="arrow r"><s></s><b></b></span></div></div>
+            </div>
+            <div class="seq-row"><div class="seqnote mark">Later — after full login completes</div></div>
+            <div class="seq-row"><div class="msg" style="--from:4;--to:5"><em>Check cache</em><span class="arrow l"><s></s><b></b></span></div></div>
+            <div class="frame"><span class="flabel">alt</span>
+              <div class="fcond">[cache hit]</div>
+              <div class="seq-row"><div class="msg" style="--from:4;--to:5"><em>Prefetched profile data</em><span class="arrow r dashed"><s></s><b></b></span></div></div>
+              <div class="fdiv"></div>
+              <div class="fcond">[cache miss]</div>
+              <div class="seq-row"><div class="msg self" style="--from:5;--to:5"><em>Fetch live from downstream</em></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="note"><span class="lbl">Architect note — a pre-authorization trust decision</span>
+          <p>Data is prefetched after password validation but <strong>before</strong> the OAuth flow, fraud scoring and any step-up complete. That is a deliberate latency-for-risk trade, made safe by three choices: it caches <em>profile</em> data only, credit-card logins are excluded, and the cache is only <em>read</em> by BFF after full login. <strong>Any change that widens what is prefetched, or lets the cache be read earlier, converts a performance optimization into an authorization bypass.</strong> Raising that is the architect's job.</p>
+        </div>
+
+        <div class="evidence"><span class="lbl">In our repos</span> Remember-Me is implemented, but only the <strong>new</strong> path is clearly present — <code>remember-me-token.adapter.ts</code>; <code>saved-card.service.ts#L22</code> carries <code>remembermeToken</code>.</div>
+        <div class="warn"><span class="lbl">Missing / verify</span> The legacy→new <strong>silent migration</strong> and the <strong>64-byte hashed-card alias</strong> are Directory / Credential-Management-Service concerns — not in the client repos.</div>
+      </div>
+    </section>
+
+    <!-- §5 -->
+    <section id="s5">
+      <div class="shead"><span class="snum">§5</span><h2>Biometric authentication</h2><label class="done"><input type="checkbox" data-k="s5">done</label></div>
+      <div class="stack">
+        <div class="tw"><table>
+          <thead><tr><th></th><th>Legacy biometric</th><th>NativeMFA biometric</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Where tokens live</strong></td><td>legacy database (proprietary)</td><td>Sentinel, using <strong>OAuth refresh tokens</strong></td></tr>
+            <tr><td><strong>New registrations in R3</strong></td><td><span class="pill p-missing">not allowed</span> existing users keep working</td><td><span class="pill p-ok">only path</span></td></tr>
+            <tr><td><strong>Validation</strong></td><td>Atlas Credential Adaptor checks against LegacyBioDB</td><td>Native Sentinel/NativeMFA OAuth flow</td></tr>
+          </tbody>
+        </table></div>
+
+        <div class="dia">
+          <div class="dia-cap">Decision — which mechanism handles the tap</div>
+          <div class="flow">
+            <span class="node term">Customer taps fingerprint / FaceID</span>
+            <span class="to">→</span>
+            <span class="node dec">Which mechanism?</span>
+            <span class="to">→</span>
+            <div class="branch">
+              <div class="branch-row"><span class="tag">legacy</span><span class="node">Atlas Credential Adaptor</span><span class="to">→</span><span class="node">LegacyBioDB proprietary token</span></div>
+              <div class="branch-row"><span class="tag">NativeMFA — new only</span><span class="node">Sentinel NativeMFA</span><span class="to">→</span><span class="node">Device unlocks stored OAuth refresh token</span><span class="to">→</span><span class="node">Exchanged at /token like any other</span></div>
+            </div>
+            <span class="to">→</span>
+            <span class="node term">Validated — session continues</span>
+          </div>
+        </div>
+
+        <p class="prose">NativeMFA is IBM the IdP platform's built-in biometric flow. Instead of Northwind storing its own biometric token format, the phone's fingerprint/FaceID <strong>unlocks a stored OAuth refresh token</strong>, which is then exchanged like any other — no proprietary validation logic. This is why <strong>NativeMFA registration is implemented internally as a High-Risk Transaction</strong> (see §7).</p>
+
+        <div class="note"><span class="lbl">Architect note — local unlock vs remote factor</span>
+          <p>The strategic move is replacing a proprietary secret store with a <strong>standard token lifecycle</strong>. The biometric is not a factor being transmitted — it is a <strong>local unlock gesture for a credential that already exists on the device</strong>. That is the same distinction underpinning FIDO2/WebAuthn and passkeys, and it is the correct answer when someone asks "is the fingerprint sent to the bank?" — it is not.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- §6 -->
+    <section id="s6">
+      <div class="shead"><span class="snum">§6</span><h2>Session, keep-alive, timeout, logout</h2><label class="done"><input type="checkbox" data-k="s6">done</label></div>
+      <div class="stack">
+        <p class="prose">The section most relevant to reliability and session findings. Three intertwined sub-flows plus one important edge case.</p>
+
+        <div class="shead" style="border:0;padding:0;margin:10px 0 0"><span class="snum">6.1</span><h3>Keeping a session alive</h3></div>
+        <ul class="plain">
+          <li>Before <strong>every</strong> API call the UI asks: is the access token expired, or <strong>less than 15 seconds</strong> from expiring? If so it refreshes <em>first</em> — avoiding a race where the token dies mid-request.</li>
+          <li>Gateway exposes a dedicated <strong>keep-alive API</strong> to extend the session without a full token refresh.</li>
+          <li>On "Stay Signed In", the UI refreshes and <strong>swaps tokens in-place</strong>.</li>
+        </ul>
+        <div class="evidence"><span class="lbl">In our repos</span> The 15-second buffer is real — <code>TOKEN_EXPIRATION_BUFFER_MS = 15000</code> (<code>auth.constants.ts#L123</code>), consumed by <code>isTokensValid</code> (<code>auth.service.ts#L345-L355</code>).</div>
+
+        <div class="shead" style="border:0;padding:0;margin:16px 0 0"><span class="snum">6.2</span><h3>Timeout thresholds</h3></div>
+        <div class="grid g2">
+          <div class="card"><div class="kicker">Inactive timeout</div><p class="mono num" style="font-size:22px;color:var(--ink)">10 min</p><p style="font-size:13.5px;color:var(--ink-3)">No UI activity → automatic sign-out, reason <code>Timeout Sign Out</code>.</p></div>
+          <div class="card"><div class="kicker">Absolute / forced timeout</div><p class="mono num" style="font-size:22px;color:var(--ink)">60 min</p><p style="font-size:13.5px;color:var(--ink-3)">Continuous activity → forced sign-out <strong>even if the user is still active</strong>, reason <code>Forced Sign Out</code>.</p></div>
+          <div class="card"><div class="kicker">Gateway transaction cache TTL</div><p class="mono num" style="font-size:22px;color:var(--ink)">60 min</p><p style="font-size:13.5px;color:var(--ink-3)">Deliberately matched to max session time, so a stale step-up can't outlive its session.</p></div>
+        </div>
+        <div class="dia">
+          <div class="dia-cap">State machine — how a session ends</div>
+          <div class="flow">
+            <span class="node term">Login success</span><span class="to">→</span>
+            <span class="node">Active<small></small></span>
+            <span class="to">↺<span>API activity resets the 10-min clock</span></span>
+            <span class="to">→</span>
+            <div class="branch">
+              <div class="branch-row"><span class="tag">10 min idle / nearing 60 min</span><span class="node dec">Warning popup</span><span class="to">→</span><span class="node">"Stay Signed In" → refresh, back to Active</span></div>
+              <div class="branch-row"><span class="tag">no response</span><span class="node bad">Timeout Sign Out</span></div>
+              <div class="branch-row"><span class="tag">60 min continuous</span><span class="node bad">Forced Sign Out</span></div>
+              <div class="branch-row"><span class="tag">user clicks logout</span><span class="node bad">User Initiated Signout</span></div>
+            </div>
+          </div>
+        </div>
+        <ul class="plain">
+          <li>Those three reasons are exactly what gets passed to Sentinel's <code>unified_logout</code>.</li>
+          <li><strong>WealthDesk overrides</strong> its own inactivity / max-lifetime values — the doc flags that CIAM changes must <strong>not</strong> alter its timeout behaviour. First place to look for a "session timeout regression".</li>
+        </ul>
+        <div class="evidence"><span class="lbl">In our repos</span> Timeouts are <strong>config-driven, not hardcoded</strong> — <code>settingMaxSessionDuration</code> and <code>settingClientInactivityTimeout</code> in <code>app-config.service.ts#L781-L1080</code>, enforced by <code>hasSessionExpired()</code> (<code>auth.service.ts#L374-L386</code>).</div>
+        <div class="warn"><span class="lbl">Watch</span> Because the values come from <strong>remote app-config</strong>, a config regression silently changes timeout behaviour. The WealthDesk override is a <strong>config</strong> concern — validate it there, not in code. <em>Where is the test for that?</em></div>
+
+        <div class="shead" style="border:0;padding:0;margin:16px 0 0"><span class="snum">6.3</span><h3>Logout sequence</h3></div>
+        <div class="dia">
+          <div class="dia-cap">Sequence — three-sided logout, unconditional local clear</div>
+          <div class="seq" style="--n:5">
+            <div class="actors"><span class="actor">Customer</span><span class="actor">Atlas UI</span><span class="actor">Atlas BFF (via Gateway)</span><span class="actor">Sentinel</span><span class="actor">EventBus</span></div>
+            <div class="lifelines"><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="seq-row"><div class="msg" style="--from:1;--to:2"><em>Click Logout</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:2;--to:3"><em>/logout</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:2;--to:3"><em>ack — or failure, doesn't matter</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:2;--to:4"><em>unified_logout (reason: user-initiated / timeout / forced)</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg self" style="--from:4;--to:4"><em>Invalidate access token in token cache</em></div></div>
+            <div class="seq-row"><div class="msg" style="--from:4;--to:5"><em>Publish LogoutEvent.L0 (with reason)</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:2;--to:4"><em>ack — or failure, doesn't matter</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg hl self" style="--from:2;--to:2"><em>Regardless of outcomes above, clear locally</em></div></div>
+            <div class="seq-row"><div class="msg hl self" style="--from:2;--to:2"><em>access token, refresh token, DPoP key pair, all client-side data</em></div></div>
+            <div class="seq-row"><div class="msg" style="--from:2;--to:4"><em>/authorize — redisplay login page</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="seqnote">IdP Datamart, Warehouse and Splunk consume LogoutEvent</div></div>
+          </div>
+        </div>
+        <div class="note"><span class="lbl">The rule that matters</span><p>"Clear locally <strong>no matter what</strong> the server call outcome is." A token or DPoP key left behind after a <em>failed</em> logout is treated in this architecture as a <strong>real risk, not an edge case</strong>.</p></div>
+        <div class="warn"><span class="lbl">Naming drift</span> Some sequence diagrams reference <code>session_logout</code> <em>replacing</em> <code>unified_logout</code>. Check which endpoint name is current in a given repo before concluding logout is broken.</div>
+
+        <div class="shead" style="border:0;padding:0;margin:16px 0 0"><span class="snum">6.4</span><h3>Security-error forced cleanup</h3></div>
+        <p class="prose">If Sentinel or Gateway detect a <strong>token alteration</strong> (tampered token or DPoP proof), the UI must: remove DPoP keys → clear all tokens + session storage → show the session-expiry page. <strong>And for the Gateway error case specifically, call logout on Sentinel <em>first</em></strong> — an extra step not required for the Sentinel-error case.</p>
+        <div class="dia">
+          <div class="dia-cap">Decision — the ordering detail that's easy to get wrong</div>
+          <div class="flow">
+            <span class="node bad">Token-alteration security error</span><span class="to">→</span><span class="node dec">Which one raised it?</span><span class="to">→</span>
+            <div class="branch">
+              <div class="branch-row"><span class="tag">Sentinel error</span><span class="node">— straight to cleanup —</span></div>
+              <div class="branch-row"><span class="tag">Gateway error</span><span class="node term">Call logout on Sentinel FIRST</span></div>
+            </div>
+            <span class="to">→</span><span class="node">Remove DPoP keys</span><span class="to">→</span><span class="node">Clear tokens + session storage</span><span class="to">→</span><span class="node term">Session-expiry page</span>
+          </div>
+        </div>
+        <div class="evidence"><span class="lbl">In our repos</span> The cleanup exists as a <strong>separate method</strong>, <code>cleanupTokensAndTimeouts()</code> (<code>auth.service.ts#L781-L812</code>) — clears sessionStorage token keys, cookies, permanent storage, the DPoP key (<code>cleanupStoredDpopKeyAndState</code>, <code>#L815-L850</code>) and PKCE codes.</div>
+        <div class="warn"><span class="lbl">High-value check — verifiable today</span>
+          <code>logout()</code> (<code>#L762-L774</code>) <strong>only</strong> calls <code>isamClient.logout()</code> and <strong>re-throws on error</strong>; its <code>finally</code> just resets <code>logoutInProgress</code>. The server call and the local cleanup are <strong>decoupled</strong>, orchestrated by <code>LogoutService</code>. <strong>If <code>LogoutService</code> only cleans up on the success path, tokens and DPoP keys survive a failed logout — a direct contradiction of §6.3/§6.4 and a strong candidate finding.</strong> Also verify the Gateway-error ordering.
+        </div>
+      </div>
+    </section>
+
+    <!-- §7 -->
+    <section id="s7">
+      <div class="shead"><span class="snum">§7</span><h2>DPoP-protected calls &amp; high-risk step-up</h2><label class="done"><input type="checkbox" data-k="s7">done</label></div>
+      <div class="stack">
+        <p class="prose"><strong>Simple version:</strong> every API call is DPoP-signed. For sensitive actions — adding a payee, transferring money, PIN reset, changing alert delivery — the system checks fraud risk in real time and may demand OTP/step-up before letting it through.</p>
+        <ol class="steps">
+          <li>Atlas UI attaches a DPoP proof to every request.</li>
+          <li><strong>Gateway validates the proof for every transaction</strong>, not just login: checks <code>iat</code> in the same 60s window <em>independently</em>, <strong>caches the PDP result</strong>, and parks the pending payload in a <strong>Transaction Cache (60-min TTL)</strong>.</li>
+          <li>If the transaction is high-risk (fixed list of ~25 types), Sentinel calls <strong>RiskEngine</strong> with the transaction ID and custom facts.<ul><li>RiskEngine returns <strong>"Review"</strong> → Sentinel <strong>fails the transaction outright</strong>. No retry, no soft-decline. Remember this when triaging "why was my legit transaction blocked".</li><li>If the RSA <em>analyze</em> call times out → also hard-fail. But if only the <em>notify</em> call or an EventBus publish fails → <strong>log and continue</strong>. The asymmetry is intentional.</li></ul></li>
+          <li><strong>Anti-replay / session binding:</strong> compare the <code>sub</code> from <strong>TXSUB</strong> in the access token against the <code>sub</code> stored in the transaction cache. Mismatch → invalidate the token, delete the cache entry, <strong>invalidate all login grants on web AND mobile</strong>, return a security error.</li>
+        </ol>
+
+        <div class="dia">
+          <div class="dia-cap">Sequence — risk, step-up, and the anti-hijack rebind</div>
+          <div class="seq" style="--n:4">
+            <div class="actors"><span class="actor">Atlas UI</span><span class="actor">Gateway</span><span class="actor">Sentinel</span><span class="actor">RiskEngine</span></div>
+            <div class="lifelines"><i></i><i></i><i></i><i></i></div>
+            <div class="seq-row"><div class="msg" style="--from:1;--to:2"><em>High-risk transaction request (DPoP-signed)</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg self" style="--from:2;--to:2"><em>Validate DPoP proof (60s iat window)</em></div></div>
+            <div class="seq-row"><div class="msg hl self" style="--from:2;--to:2"><em>Store payload in Transaction Cache (60-min TTL, sub from TXSUB)</em></div></div>
+            <div class="seq-row"><div class="msg" style="--from:2;--to:3"><em>Evaluate step-up policy</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="seq-row"><div class="msg" style="--from:3;--to:4"><em>Assess risk (transaction id + custom facts)</em><span class="arrow r"><s></s><b></b></span></div></div>
+            <div class="frame"><span class="flabel">alt</span>
+              <div class="fcond">[RiskEngine returns Review]</div>
+              <div class="seq-row"><div class="msg" style="--from:1;--to:2"><em>Transaction failed — no retry</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+              <div class="fdiv"></div>
+              <div class="fcond">[vendor analyze times out / fails]</div>
+              <div class="seq-row"><div class="msg" style="--from:1;--to:2"><em>Transaction failed — hard-fail</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+              <div class="fdiv"></div>
+              <div class="fcond">[risk OK, step-up required]</div>
+              <div class="seq-row"><div class="msg" style="--from:1;--to:3"><em>Step-up required (OTP / biometric)</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+              <div class="seq-row"><div class="msg" style="--from:1;--to:3"><em>Complete OTP / biometric step-up</em><span class="arrow r"><s></s><b></b></span></div></div>
+              <div class="seq-row"><div class="msg hl self" style="--from:3;--to:3"><em>Compare sub (TXSUB) vs transaction cache sub</em></div></div>
+            </div>
+            <div class="frame"><span class="flabel">alt</span>
+              <div class="fcond">[sub mismatch]</div>
+              <div class="seq-row"><div class="msg self" style="--from:3;--to:3"><em>Invalidate token + delete tx cache entry</em></div></div>
+              <div class="seq-row"><div class="msg self" style="--from:3;--to:3"><em>Invalidate all login grants (web + mobile)</em></div></div>
+              <div class="seq-row"><div class="msg" style="--from:1;--to:3"><em>Security error</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+              <div class="fdiv"></div>
+              <div class="fcond">[sub matches]</div>
+              <div class="seq-row"><div class="msg" style="--from:2;--to:3"><em>Approved, execute stored payload</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+              <div class="seq-row"><div class="msg" style="--from:1;--to:2"><em>Transaction success</em><span class="arrow l dashed"><s></s><b></b></span></div></div>
+            </div>
+            <div class="seq-row"><div class="seqnote mark">Side-channel failure (notify call / EventBus publish) → logged and continues, does not block the customer</div></div>
+          </div>
+        </div>
+
+        <div class="note"><span class="lbl">What this actually is</span><p>Parking the payload and re-binding it to the user after OTP is hand-rolled <strong>dynamic linking</strong> — the PSD2 SCA requirement that authentication be cryptographically tied to <em>that specific transaction</em>. Note Northwind does step-up as a <strong>transaction property</strong>, not as a token property (<code>acr</code>). Know both models.</p></div>
+
+        <div class="evidence"><span class="lbl">In our repos — sentinel-config</span> TXSUB claim handling: <code>saveRsubClaims()</code> (<code>NativeMFA_oauth_AccessPolicy.js#L66</code>), <code>mapRsubAttrs()</code> (<code>Hub_pre_token_generation.js#L53</code>), <code>RSUB_LIFETIME = 3610s</code>.</div>
+        <div class="warn"><span class="lbl">Gaps — high severity if missing</span>
+          <ul>
+            <li>The <strong><code>sub</code> compare-and-invalidate block could not be located</strong> — only TXSUB <em>save/map</em> was found. A missing or web-only comparison <strong>is exactly the high-severity finding §7 describes</strong>. Trace <code>AccessPolicyFunctions.js</code> before concluding it's implemented.</li>
+            <li>Transaction Cache and Gateway PDP caching live in Gateway config — <strong>NEEDS-EVIDENCE</strong>.</li>
+            <li>Confirm the asymmetric fail behaviour in the RiskEngine access policy before "fixing" any fail-open/closed finding.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- §8 -->
+    <section id="s8">
+      <div class="shead"><span class="snum">§8</span><h2>The SSO family</h2><label class="done"><input type="checkbox" data-k="s8">done</label></div>
+      <div class="stack">
+        <p class="prose">Several <strong>distinct</strong> patterns using <strong>different mechanisms</strong>. Don't assume they're all "the same DPoP/OAuth thing".</p>
+        <div class="tw"><table>
+          <thead><tr><th>Pattern</th><th>Mechanism</th><th>Use case</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Wealth platform</strong></td><td>OAuth token exchange via Sentinel</td><td>Atlas → Wealth accounts without re-login</td></tr>
+            <tr><td><strong>Deep links</strong> (eWallet, eTransfer)</td><td>External link → AuthKit MFE authenticates → lands on a Atlas feature</td><td>Marketing / partner deep links</td></tr>
+            <tr><td><strong>National Sign-In</strong></td><td><strong>Atlas acts as an external IdP</strong> for government sites</td><td>"Use your bank login to sign into GovPortal"</td></tr>
+            <tr><td><strong>WealthDesk</strong></td><td>Atlas as authenticator, separate business API</td><td>Apply using existing Atlas identity</td></tr>
+            <tr><td><strong>LegacyWealth</strong></td><td><strong>SAML</strong> — not OAuth</td><td>Legacy / partner integration</td></tr>
+            <tr><td><strong>Rewards</strong></td><td>Separate integration, current-state only</td><td>No R3 change</td></tr>
+            <tr><td><strong>Legacy token SSO</strong></td><td>Being phased out</td><td>Part of the broader modernization</td></tr>
+          </tbody>
+        </table></div>
+        <div class="note"><span class="lbl">Why this matters for findings</span><p>If a finding says "SSO doesn't use DPoP," <strong>check which SSO path it is first</strong>. SAML-based LegacyWealth and National Sign-In-as-external-IdP are <strong>architecturally outside the DPoP/OAuth token boundary by design — not a gap.</strong> Distinguishing a boundary from a gap is an architect-level move.</p></div>
+      </div>
+    </section>
+
+    <!-- §9 -->
+    <section id="s9">
+      <div class="shead"><span class="snum">§9</span><h2>User ID conversion</h2><label class="done"><input type="checkbox" data-k="s9">done</label></div>
+      <div class="stack">
+        <p class="prose">Most customers log in with a card number. This lets an eligible customer create a User ID and convert their credential from card-number-based to User-ID-based — a <strong>security improvement</strong> (card numbers are guessable and enumerable) <strong>and an the prudential regulator regulatory requirement</strong>.</p>
+        <ol class="steps">
+          <li><strong>Eligibility file</strong> loaded via the eligibility feed → the feed loader → sets enrollment flags in Directory.</li>
+          <li>At login, Atlas UI calls the eligibility API — if eligible and not previously dismissed, shows the prompt.</li>
+          <li><strong>Conversion is itself a High-Risk Transaction</strong> — it goes through the §7 OTP step-up before being allowed.</li>
+          <li>On conversion: Credential Mgmt validates the ID isn't blacklisted; the Remember-Me token switches to <strong>GUID</strong> lookup and drops credential type; the old card-number biometric mapping is preserved by matching a <strong>64-byte hashed-card alias</strong> in Directory; saved payees migrate via <code>SecureFormMigrationService</code>; and a <strong>backup branch in Directory</strong> is created first so the whole thing can roll back.</li>
+        </ol>
+        <div class="note"><span class="lbl">Patterns worth stealing</span><p><strong>Identity continuity across a credential change</strong> (the hashed-card alias keeps biometric registration alive), and <strong>a reversible checkpoint before any identity migration</strong> (the Directory backup branch). Both belong in any migration you design.</p></div>
+        <div class="warn"><span class="lbl">Mostly not in our repos</span> Only the <code>PWD_BLACKLIST</code> error codes surface client-side (<code>error.adapter.ts#L225-L226</code>). <code>SecureFormMigrationService</code>, the Client Credential Orchestration API, the GUID alias rewrite and the Directory rollback are backend services — <strong>treat the whole §9 flow as NEEDS-EVIDENCE and don't raise code findings against it from these repos alone.</strong></div>
+      </div>
+    </section>
+
+    <!-- §10 -->
+    <section id="s10">
+      <div class="shead"><span class="snum">§10</span><h2>POA, password reset, registration</h2><label class="done"><input type="checkbox" data-k="s10">done</label></div>
+      <div class="stack">
+        <p class="prose">Mostly <strong>Release 3.2</strong>, small-business-focused enhancements layered onto existing self-serve registration and reset flows.</p>
+        <ul class="plain">
+          <li><strong>P2A role auto-linking:</strong> existing role players automatically get the POA-related "P2A" role, so they receive OTP through their own delivery method instead of needing manual re-setup.</li>
+          <li><strong>POA registration with existing credentials:</strong> a POA user who already has Atlas credentials from another card extends access to a new business card <strong>without a second login</strong>.</li>
+          <li><strong>POA password reset:</strong> reset gets POA-aware checks — reject where the card assignment creates ambiguity, and send confirmations to the <strong>business owner / Authorized Signatory</strong>, not just the POA user.</li>
+          <li><strong>Registration reuse:</strong> reuse the existing user-ID credential from the credit card rather than forcing a brand-new one.</li>
+          <li><strong>Admin console:</strong> a new <strong>credential-change history view</strong>, sourced from the EventBus events described throughout this document.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- §11 -->
+    <section id="s11">
+      <div class="shead"><span class="snum">§11</span><h2>Glossary</h2><label class="done"><input type="checkbox" data-k="s11">done</label></div>
+      <div class="tw"><table>
+        <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><strong>DPoP</strong></td><td>Demonstration of Proof-of-Possession (RFC 9449) — sender-constrains OAuth tokens by binding them to a client-held private key, proven via a signed JWT header on each request.</td></tr>
+          <tr><td><strong>PKCE</strong></td><td>Proof Key for Code Exchange — protects the code exchange for public clients using a <code>code_verifier</code>/<code>code_challenge</code> pair. Never named in the source doc, but exactly what the "code verifier" step describes.</td></tr>
+          <tr><td><strong>NativeMFA</strong></td><td>Mobile Multi-Factor Authentication — Sentinel's native biometric mechanism, backed by OAuth refresh tokens.</td></tr>
+          <tr><td><strong>Sentinel / the IdP platform</strong></td><td>the IdP platform — the IdP product referred to as "Sentinel".</td></tr>
+          <tr><td><strong>TXSUB</strong></td><td>The <code>sub</code> claim carried in the access token, used to bind a transaction-cache entry to the user who created it.</td></tr>
+          <tr><td><strong>CIF</strong></td><td>Internal Northwind customer identifier formats resolving a credential to a customer record.</td></tr>
+          <tr><td><strong>Directory</strong></td><td>LDAP-style directory storing credentials, aliases and enrollment flags.</td></tr>
+          <tr><td><strong>EventBus</strong></td><td>Event streaming fabric (Kafka-like) propagating login/logout/fraud/conversion events.</td></tr>
+          <tr><td><strong>GridCache</strong></td><td>In-memory data grid for login-optimization prefetch.</td></tr>
+          <tr><td><strong>BFF</strong></td><td>Backend-for-frontend — Atlas's application session layer, distinct from the security session in Sentinel.</td></tr>
+          <tr><td><strong>RiskEngine</strong></td><td>Enterprise Risk Assessment — orchestrates calls to VendorScore, DeviceTrust, BehaviorIQ for risk scoring.</td></tr>
+          <tr><td><strong>HRT</strong></td><td>High-Risk Transaction — anything requiring risk assessment and possible step-up before execution.</td></tr>
+          <tr><td><strong>Gateway</strong></td><td>Edge Gateway — the gateway enforcing DPoP validation and step-up policy for business APIs.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- §12 -->
+    <section id="s12">
+      <div class="shead"><span class="snum">§12</span><h2>How to use this when reviewing findings</h2><label class="done"><input type="checkbox" data-k="s12">done</label></div>
+      <ol class="steps">
+        <li>Finding mentions <strong>token / session / DPoP</strong> → identify <strong>which of the lifecycles</strong> it touches using §2.4. Storage and cleanup rules differ per row.</li>
+        <li>Finding about <strong>replay or "old request accepted"</strong> → check the 60-second <code>iat</code> window (§2.3), and confirm whether it's enforced at Sentinel, Gateway or both. <strong>Independent implementations drift.</strong></li>
+        <li>Finding about <strong>logout not clearing state</strong> → §6.3/§6.4. The rule is "clear locally no matter what." Clearing only on success is a direct contradiction of the requirement.</li>
+        <li>Finding about <strong>high-risk transactions failing oddly</strong> → check §7's asymmetric failure handling before assuming it's a bug.</li>
+        <li>Finding in <strong>WealthDesk session handling</strong> → its timeout values are <em>overridden</em> and must not regress from CIAM changes (§6.2).</li>
+      </ol>
+    </section>
+
+    <!-- Appendix A -->
+    <section id="sa">
+      <div class="shead"><span class="snum">A</span><h2>Concept → code map</h2><label class="done"><input type="checkbox" data-k="sa">done</label></div>
+      <div class="stack">
+        <p class="prose">As implemented in the repos we actually have. <strong>❌ means "not in these repos" — that is a request for evidence, not a pass and not a finding.</strong></p>
+        <div class="chips" role="group" aria-label="Filter by status">
+          <button class="chip" aria-pressed="true" data-f="all">All</button>
+          <button class="chip" aria-pressed="false" data-f="ok">Verified</button>
+          <button class="chip" aria-pressed="false" data-f="partial">Partial</button>
+          <button class="chip" aria-pressed="false" data-f="missing">Needs evidence</button>
+        </div>
+        <div class="tw"><table id="amap">
+          <thead><tr><th>§</th><th>Concept</th><th>Status</th><th>Primary code reference</th></tr></thead>
+          <tbody>
+            <tr data-s="ok"><td class="mono">2.1</td><td>Access token in memory / refresh in sessionStorage</td><td><span class="pill p-ok">verified</span></td><td class="mono">hybrid-token-storage.service.ts#L13-L58</td></tr>
+            <tr data-s="ok"><td class="mono">2.1</td><td><code>/token</code> code exchange</td><td><span class="pill p-ok">verified</span></td><td class="mono">auth.service.ts#L280-L285, oauth2.ts#L47</td></tr>
+            <tr data-s="ok"><td class="mono">2.2</td><td>PKCE verifier + challenge (SHA-256)</td><td><span class="pill p-ok">verified</span></td><td class="mono">auth.service.ts#L892-L910</td></tr>
+            <tr data-s="missing"><td class="mono">2.2</td><td><code>/authorize</code> request object signed</td><td><span class="pill p-missing">alg:none</span></td><td class="mono">auth.utils.service.ts#L21-L24 + clients.j2#L25</td></tr>
+            <tr data-s="ok"><td class="mono">2.3</td><td>DPoP proof JWT per call (htm/htu/iat/jti/ath)</td><td><span class="pill p-ok">verified</span></td><td class="mono">auth.service.ts#L1160-L1195</td></tr>
+            <tr data-s="ok"><td class="mono">2.3</td><td>DPoP key pair — private key off-JS (native keystore)</td><td><span class="pill p-ok">verified</span></td><td class="mono">auth.service.ts#L73-L77, #L815-L850</td></tr>
+            <tr data-s="partial"><td class="mono">2.3</td><td>60-second <code>iat</code> replay window enforcement</td><td><span class="pill p-partial">client only</span></td><td class="mono">auth.service.ts#L1160; server window = Sentinel/Gateway config not in repo</td></tr>
+            <tr data-s="ok"><td class="mono">2.4/6.1</td><td>Proactive refresh 15s before expiry</td><td><span class="pill p-ok">verified</span></td><td class="mono">auth.constants.ts#L123, auth.service.ts#L345-L355</td></tr>
+            <tr data-s="ok"><td class="mono">3</td><td>Client-side credential encryption before <code>/auth</code></td><td><span class="pill p-ok">verified</span></td><td class="mono">payload-encryption.service.ts#L86-L115</td></tr>
+            <tr data-s="ok"><td class="mono">3</td><td>MFE step-up authorize (pwd/loginid/MFA)</td><td><span class="pill p-ok">verified (alg:none)</span></td><td class="mono">authentication.service.ts#L289-L302</td></tr>
+            <tr data-s="ok"><td class="mono">3/4</td><td>EventBus login/logout event publish</td><td><span class="pill p-ok">verified</span></td><td class="mono">PublishProducerEventService.java#L36-L46</td></tr>
+            <tr data-s="missing"><td class="mono">3/8</td><td><code>/initAppSession</code>, GridCache prefetch, profile-service</td><td><span class="pill p-missing">needs evidence</span></td><td class="mono">Atlas BFF backend — not in repo</td></tr>
+            <tr data-s="partial"><td class="mono">4</td><td>Remember Me (new format)</td><td><span class="pill p-partial">new only</span></td><td class="mono">remember-me-token.adapter.ts, saved-card.service.ts#L22</td></tr>
+            <tr data-s="missing"><td class="mono">4</td><td>Legacy→new migration / hashed-card alias</td><td><span class="pill p-missing">needs evidence</span></td><td class="mono">Directory / Credential Mgmt Service — not in repo</td></tr>
+            <tr data-s="missing"><td class="mono">5</td><td>NativeMFA / legacy biometric validation</td><td><span class="pill p-missing">needs evidence</span></td><td class="mono">Sentinel NativeMFA + LegacyBioDB adaptor — client only invokes</td></tr>
+            <tr data-s="ok"><td class="mono">6.2</td><td>10-min inactivity / 60-min absolute timeout</td><td><span class="pill p-ok">config-driven</span></td><td class="mono">app-config.service.ts#L781-L1080, auth.service.ts#L374-L386</td></tr>
+            <tr data-s="ok"><td class="mono">6.3</td><td><code>unified_logout</code> call</td><td><span class="pill p-ok">verified</span></td><td class="mono">auth.service.ts#L762-L774</td></tr>
+            <tr data-s="partial"><td class="mono">6.3/6.4</td><td>"Clear local state no matter what"</td><td><span class="pill p-partial">decoupled</span></td><td class="mono">cleanupTokensAndTimeouts #L781-L812 — verify LogoutService calls it in finally</td></tr>
+            <tr data-s="partial"><td class="mono">7</td><td>TXSUB claim save/map</td><td><span class="pill p-partial">partial</span></td><td class="mono">NativeMFA_oauth_AccessPolicy.js#L66</td></tr>
+            <tr data-s="missing"><td class="mono">7</td><td><code>sub</code> compare + invalidate grants (web+mobile)</td><td><span class="pill p-missing">not located</span></td><td class="mono">trace AccessPolicyFunctions.js</td></tr>
+            <tr data-s="missing"><td class="mono">7</td><td>Transaction Cache 60-min TTL, Gateway PDP cache</td><td><span class="pill p-missing">needs evidence</span></td><td class="mono">Gateway — not in repo</td></tr>
+            <tr data-s="missing"><td class="mono">9</td><td>User ID conversion / SecureFormMigrationService</td><td><span class="pill p-missing">needs evidence</span></td><td class="mono">backend orchestration — not in repo</td></tr>
+            <tr data-s="missing"><td class="mono">10</td><td>POA / password-reset enhancements</td><td><span class="pill p-missing">needs evidence</span></td><td class="mono">backend — not in repo</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- Appendix B -->
+    <section id="sb">
+      <div class="shead"><span class="snum">B</span><h2>Vulnerabilities &amp; exploits to focus on</h2><label class="done"><input type="checkbox" data-k="sb">done</label></div>
+      <div class="stack">
+        <p class="prose">The concrete in-repo issues this architecture surfaces when laid over the code. Cross-referenced with the unsigned-JWT inventory scan (2026-08-18).</p>
+        <div class="tw"><table>
+          <thead><tr><th>Issue</th><th>What the code does</th><th>Where</th><th>Exploit / risk</th><th>Severity</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Token integrity / identity spoof</strong></td><td>Server decodes <code>id_token_hint</code> JWT <strong>without signature verification</strong> — <code>indexOf('.')</code> + base64 + <code>JSON.parse</code>, then trusts <code>sub == request_username</code></td><td class="mono">PartnerOIDC_pre_token_generation.js#L142-L233; BusinessAPI_pre_token_generation.js#L156-L236</td><td>Forge a token with any <code>sub</code> → identity spoof / auth bypass. A correct verifier exists but is <strong>unused</strong>.</td><td><span class="pill p-crit">critical</span><br><span class="mono" style="font-size:11px;color:var(--ink-3)">PBBBankingAPI un-ticketed</span></td></tr>
+            <tr><td><strong>Request-object integrity</strong></td><td><code>/authorize</code> request object minted as <code>alg:none</code>, Sentinel configured to accept it</td><td class="mono">auth.utils.service.ts#L21-L24; clients.j2#L25/#L89/#L148; JWTtoMap.js#L36</td><td>Tamper with <code>redirect_uri</code>/<code>scope</code> — not integrity-protected. <code>idp_v2</code> already fixed to RS256.</td><td><span class="pill p-high">high</span> config drift</td></tr>
+            <tr><td><strong>Step-up integrity</strong></td><td>MFE step-up authorize uses <code>alg:none</code> unsigned JWT</td><td class="mono">authentication.service.ts#L289-L302</td><td>Same tamper class on change-password / login-id / MFA step-up.</td><td><span class="pill p-high">high</span></td></tr>
+            <tr><td><strong>DPoP replay</strong></td><td>Client stamps <code>iat</code>; the 60s window lives only in gateway config not in these repos</td><td class="mono">auth.service.ts#L1160</td><td>If Sentinel/Gateway windows drift or one path skips it, a captured proof is replayable.</td><td><span class="pill p-partial">verify</span></td></tr>
+            <tr><td><strong>§6.4 logout cleanup</strong></td><td>Server logout call and local cleanup are <strong>decoupled</strong>; <code>logout()</code> re-throws on failure</td><td class="mono">auth.service.ts#L762-L774 vs #L781-L812</td><td>If cleanup is skipped on the failure path, tokens + DPoP key <strong>survive logout</strong> → reuse after "logout".</td><td><span class="pill p-high">high if confirmed</span></td></tr>
+            <tr><td><strong>Anti-hijack</strong></td><td><code>sub</code>/TXSUB compare-and-invalidate not located; only save/map found</td><td class="mono">Hub_pre_token_generation.js#L53</td><td>Missing or web-only comparison lets a step-up complete with a mismatched token → <strong>transaction hijack</strong>.</td><td><span class="pill p-crit">high if missing</span></td></tr>
+            <tr><td><strong>Client-side decode</strong></td><td>Client <code>jwt_decode</code> of ID/access tokens with no verification</td><td class="mono">auth.service.ts#L979; jwt.service.ts#L44-L165</td><td>Lower risk (received over TLS) but <strong>never use decoded claims for security decisions client-side</strong>.</td><td><span class="pill p-low">low</span></td></tr>
+          </tbody>
+        </table></div>
+        <div class="note"><span class="lbl">How to extend this</span><p>When the Gateway, Atlas BFF and Credential-Management-Service repos land in the workspace, re-run the concept map for every ❌ and 🟡 row. <strong>Those are current evidence gaps, not confirmed passes.</strong></p></div>
+      </div>
+    </section>
+
+    <section id="para">
+      <div class="shead"><span class="snum">★</span><h2>The one paragraph — say it from memory</h2><label class="done"><input type="checkbox" data-k="para">done</label></div>
+      <div class="model">
+        <p>A customer hits the Atlas SPA, which federates in the AuthKit MFE micro-frontend. The credential is encrypted client-side and validated by Sentinel against the Directory. Sentinel runs a standard <strong>OAuth 2.0 authorization-code flow with PKCE</strong> — the SPA is a public client, so it commits to a hashed challenge up front and redeems the code with the original verifier. The tokens that come back are <strong>not bearer tokens</strong>: they are <strong>DPoP-bound</strong> to a key pair whose private half never leaves the device's secure keystore, so every call carries a freshly signed proof with htm/htu/iat/jti/ath, checked against a 60-second replay window independently by both Sentinel and the Gateway gateway. The access token lives in memory only, the refresh token in sessionStorage, and the UI refreshes 15 seconds before expiry. A <strong>second, separate application session</strong> lives in Atlas BFF, tied back by IDP_Correlation_ID and warmed by an EventBus-driven prefetch that starts the instant the password validates. Sensitive actions escalate into a <strong>high-risk-transaction step-up</strong>: Gateway parks the payload in a 60-minute transaction cache, RiskEngine scores risk through the risk vendors, and after OTP the system re-binds the transaction by comparing the token's TXSUB against the cached sub — a mismatch nukes the token, the cached transaction, and every login grant on web <em>and</em> mobile. Logout is triple-sided and the local clear is unconditional by design. Everything is published to EventBus and consumed by the datamart, Warehouse and Splunk.</p>
+      </div>
+    </section>
+
+    <footer>Reconstructed from <code>04-identity-r3-architecture-explainer.md</code>, itself derived from <code>R3_Identity_Modernization_Solution_Architecture.pdf</code> v1.0 (Mar 2026) cross-referenced against atlas-ui, authkit-mfe, sentinel-sdk-core, sentinel-config and eventbus-adapter. Progress is stored in this browser only.</footer>
+  </div>
+
+  <!-- ══════════════ DRILL ══════════════ -->
+  <div class="panel" id="drill" hidden>
+    <div class="phead">
+      <div class="kicker">Active recall</div>
+      <h1>Remove one control, name the exploit</h1>
+      <p>The single highest-value exercise in this whole track — worth more than re-reading the RFCs. Read the control, answer <em>out loud</em>, then reveal. If you can't name the attack, you know the flow but not the threat model, and that's the gap between an operator and a reviewer.</p>
+    </div>
+
+    <section>
+      <div class="shead"><span class="snum">14</span><h2>The controls</h2></div>
+      <div class="drill" id="cards"></div>
+    </section>
+
+    <section>
+      <div class="shead"><span class="snum">◎</span><h2>Open gaps, in priority order</h2></div>
+      <p class="prose" style="margin-bottom:14px">Chase these in this order. Note which one you can settle <strong>today</strong> with only the repos you already have.</p>
+      <div class="stack">
+        <div class="card"><div style="display:flex;gap:12px;align-items:flex-start"><span class="mod-n">1</span><div class="mod-b"><h4><code>sub</code>/TXSUB compare-and-invalidate</h4><p>§7. High severity if genuinely missing. <strong>Need:</strong> the transaction-cache access policy — trace <code>AccessPolicyFunctions.js</code>.</p></div></div></div>
+        <div class="card" style="border-color:var(--accent)"><div style="display:flex;gap:12px;align-items:flex-start"><span class="mod-n">2</span><div class="mod-b"><h4><code>LogoutService</code> cleanup on the failure path</h4><p>§6.4. <strong>Verifiable today in the repos you already have. Start here.</strong> Does it call <code>cleanupTokensAndTimeouts()</code> in a <code>finally</code>, or only on success?</p></div></div></div>
+        <div class="card"><div style="display:flex;gap:12px;align-items:flex-start"><span class="mod-n">3</span><div class="mod-b"><h4>Server-side 60s <code>iat</code> window + <code>jti</code> replay cache</h4><p>§2.3. <strong>Need:</strong> the Gateway policy. Also worth asking whether a <code>jti</code> cache exists at all.</p></div></div></div>
+        <div class="card"><div style="display:flex;gap:12px;align-items:flex-start"><span class="mod-n">4</span><div class="mod-b"><h4><code>BusinessAPI_pre_token_generation.js</code></h4><p>Appendix B. Unverified <code>id_token_hint</code> — <strong>critical and un-ticketed.</strong></p></div></div></div>
+        <div class="card"><div style="display:flex;gap:12px;align-items:flex-start"><span class="mod-n">5</span><div class="mod-b"><h4><code>alg:none</code> request objects</h4><p>§2.2. Config drift — the fix already exists in the <code>idp_v2</code> template. The deliverable here is a <strong>migration plan</strong>, not a finding.</p></div></div></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ══════════════ PLAN ══════════════ -->
+  <div class="panel" id="plan" hidden>
+    <div class="phead">
+      <div class="kicker">Twelve modules · six weeks</div>
+      <h1>From operator to architect</h1>
+      <p>You are not studying OAuth in the abstract — you are studying <em>the system you already work on</em>, using the standards to explain why it is shaped the way it is. Every module points back into a section of the architecture.</p>
+    </div>
+
+    <section>
+      <div class="shead"><span class="snum">◇</span><h2>The three levels</h2></div>
+      <div class="tw"><table>
+        <thead><tr><th>Level</th><th>You can…</th><th>Test</th></tr></thead>
+        <tbody>
+          <tr><td><strong>1 · Operator</strong></td><td>Follow the flow, find the code, explain what a step does</td><td>Redraw §3 and §7 from memory</td></tr>
+          <tr><td><strong>2 · Reviewer</strong></td><td>Say <em>what breaks</em> if a step is removed or reordered, and cite the threat</td><td>For every control, name the attack it defeats <em>and</em> the one it doesn't</td></tr>
+          <tr><td><strong>3 · Architect</strong></td><td>Design an alternative, defend the trade-off, know the migration path</td><td>Justify DPoP vs mTLS vs BFF for a retail bank, with cost and ops impact</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note" style="margin-top:14px"><span class="lbl">Why most people stall at level 1</span><p>They learn the <em>flow</em> and never the <em>threat model</em>. The Drill tab is the thing that moves you.</p></div>
+    </section>
+
+    <section>
+      <div class="shead"><span class="snum">01</span><h2>Modules</h2></div>
+      <div class="stack" id="mods"></div>
+    </section>
+
+    <section>
+      <div class="shead"><span class="snum">◷</span><h2>Six-week schedule</h2></div>
+      <p class="prose" style="margin-bottom:14px">Roughly 6–8 hours a week. <strong>Do not skip the output column</strong> — producing the artifact is what converts reading into knowledge, and three of these are real deliverables for your actual job.</p>
+      <div class="tw"><table>
+        <thead><tr><th>Week</th><th>Modules</th><th>Output you produce</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">1</td><td>0, 1</td><td>Redraw §1 topology + §2.1 sequence from memory. One page: "why authorization code and nothing else."</td></tr>
+          <tr><td class="mono">2</td><td>2, 3</td><td>Write the <strong>JAR / alg:none migration plan</strong> for <code>spapublicclient</code>. A real work deliverable.</td></tr>
+          <tr><td class="mono">3</td><td>4, 5</td><td>Build a toy DPoP client + verifier (WebCrypto + small Node verifier) with htm/htu/iat/jti/ath, a <code>jti</code> replay cache, and a nonce mode. <strong>Building it once beats reading it five times.</strong></td></tr>
+          <tr><td class="mono">4</td><td>6, 7</td><td>Design "correct logout under partial failure." Map it onto the <code>LogoutService</code> gap.</td></tr>
+          <tr><td class="mono">5</td><td>8, 9</td><td>Threat-model the HRT step-up; write the <code>sub</code>/TXSUB <strong>evidence request</strong> — name the exact artifacts you need.</td></tr>
+          <tr><td class="mono">6</td><td>10, 11, 12</td><td>Write the <strong>"CIAM R4" one-pager</strong>: what you'd change, in what order, with the risk of each. Then run the full drill cold.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section>
+      <div class="shead"><span class="snum">◈</span><h2>Evidence discipline</h2></div>
+      <div class="stack">
+        <p class="prose">The explainer's best feature is that it <strong>refuses to claim a control is present when the config isn't in the repo</strong>. Copy that habit exactly — it is the clearest signal of architect-level thinking you can give in a review or an interview.</p>
+        <div class="grid g3">
+          <div class="card"><span class="pill p-ok">verified</span><p style="margin-top:9px;font-size:14px;color:var(--ink-2)">You have read the code path end to end.</p></div>
+          <div class="card"><span class="pill p-partial">partial</span><p style="margin-top:9px;font-size:14px;color:var(--ink-2)">One side present — client sets <code>iat</code>; the server window is unproven.</p></div>
+          <div class="card"><span class="pill p-missing">needs evidence</span><p style="margin-top:9px;font-size:14px;color:var(--ink-2)">Not in scope of what you can see. <strong>Not "probably fine". Not "a finding."</strong> A request with a named artifact attached.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="shead"><span class="snum">◉</span><h2>Reading list, ranked by value per hour</h2></div>
+      <div class="tw"><table>
+        <thead><tr><th>#</th><th>Document</th><th>Why it earns the time</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">1</td><td><strong>RFC 9700</strong> — OAuth 2.0 Security BCP</td><td>If you read one thing, this.</td></tr>
+          <tr><td class="mono">2</td><td><strong>RFC 9449</strong> — DPoP</td><td>Your differentiator. Know it cold.</td></tr>
+          <tr><td class="mono">3</td><td><strong>RFC 8725</strong> — JWT BCP</td><td>Explains every row of Appendix B.</td></tr>
+          <tr><td class="mono">4</td><td><strong>RFC 7636</strong> — PKCE</td><td>Short, and you will be asked about it.</td></tr>
+          <tr><td class="mono">5</td><td><strong>OAuth for Browser-Based Apps</strong> (IETF BCP)</td><td>The BFF-vs-DPoP argument, in full.</td></tr>
+          <tr><td class="mono">6</td><td><strong>NIST SP 800-63B</strong></td><td>AALs, session and reauth rules — the vocabulary auditors and regulators use.</td></tr>
+          <tr><td class="mono">7</td><td><strong>OWASP ASVS v5</strong> — auth + session</td><td>A ready-made review checklist.</td></tr>
+          <tr><td class="mono">8</td><td><strong>RFC 9470</strong> — Step-Up Authentication Challenge</td><td>Directly relevant to §7.</td></tr>
+          <tr><td class="mono">9</td><td><strong>RFC 8693</strong> — Token Exchange</td><td>The mechanism behind §8's Wealth SSO.</td></tr>
+          <tr><td class="mono">10</td><td><strong>OIDC Core §15</strong> + RP-Initiated Logout</td><td>Relevant to §6.3 and Appendix B row 1.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+  </div>
+
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ── storage (never let a blocked accessor break the page) ── */
+  var KEY="ciam-deck-v1";
+  function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return{}}}
+  function save(o){try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}}
+  var state=load();
+
+  /* ── theme ── */
+  var root=document.documentElement, tbtn=document.getElementById("theme");
+  if(state.theme){root.setAttribute("data-theme",state.theme);}
+  tbtn.addEventListener("click",function(){
+    var cur=root.getAttribute("data-theme");
+    var next = cur==="dark" ? "light" : cur==="light" ? "dark" :
+      (window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches ? "light":"dark");
+    root.setAttribute("data-theme",next); state.theme=next; save(state);
+  });
+
+  /* ── tabs ── */
+  var tabs=[].slice.call(document.querySelectorAll(".tab"));
+  tabs.forEach(function(t){
+    t.addEventListener("click",function(){
+      tabs.forEach(function(o){
+        o.setAttribute("aria-selected",String(o===t));
+        document.getElementById(o.dataset.panel).hidden = (o!==t);
+      });
+      window.scrollTo({top:0,behavior:"auto"});
+    });
+  });
+
+  /* ── progress checkboxes ── */
+  var boxes=[].slice.call(document.querySelectorAll(".done input"));
+  var fill=document.getElementById("mfill"), txt=document.getElementById("mtxt");
+  function refresh(){
+    var n=boxes.filter(function(b){return b.checked}).length;
+    fill.style.width=(boxes.length? n/boxes.length*100:0)+"%";
+    txt.textContent=n+" / "+boxes.length;
+  }
+  state.done = state.done || {};
+  boxes.forEach(function(b){
+    b.checked = !!state.done[b.dataset.k];
+    b.addEventListener("change",function(){
+      state.done[b.dataset.k]=b.checked; save(state); refresh();
+    });
+  });
+  refresh();
+
+  /* ── scroll spy ── */
+  var links=[].slice.call(document.querySelectorAll("#nav a"));
+  var map={}; links.forEach(function(a){var el=document.querySelector(a.getAttribute("href")); if(el) map[el.id]=a;});
+  if("IntersectionObserver" in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        var a=map[e.target.id]; if(!a) return;
+        if(e.isIntersecting){links.forEach(function(l){l.classList.remove("on")}); a.classList.add("on");}
+      });
+    },{rootMargin:"-84px 0px -70% 0px",threshold:0});
+    Object.keys(map).forEach(function(id){io.observe(document.getElementById(id))});
+  }
+
+  /* ── appendix A filter ── */
+  var chips=[].slice.call(document.querySelectorAll(".chip"));
+  var rows=[].slice.call(document.querySelectorAll("#amap tbody tr"));
+  chips.forEach(function(c){
+    c.addEventListener("click",function(){
+      chips.forEach(function(o){o.setAttribute("aria-pressed",String(o===c))});
+      var f=c.dataset.f;
+      rows.forEach(function(r){ r.style.display = (f==="all"||r.dataset.s===f) ? "" : "none"; });
+    });
+  });
+
+  /* ── drill cards ── */
+  var DRILL=[
+    ["PKCE code_verifier","A stolen authorization code becomes redeemable by the attacker — the exact interception attack PKCE exists to stop.","§2.2 · RFC 7636"],
+    ["Signed request object","Already missing here. Request parameters (redirect_uri, scope) can be tampered with at /authorize, because nothing integrity-protects them.","§2.2 · RFC 9101"],
+    ["DPoP entirely","Any leaked access token becomes replayable from anywhere until it expires — it reverts to cash-like bearer semantics.","§2.3 · RFC 9449"],
+    ["The ath claim in the proof","A proof minted for one access token can be paired with a different one, breaking the binding between proof and token.","§2.3 · RFC 9449"],
+    ["The 60-second iat window","Captured proofs stay valid indefinitely, so replay is unbounded in time rather than limited to a one-minute blast radius.","§2.3"],
+    ["jti uniqueness tracking","Replay is still possible <em>within</em> the 60-second window — a time check alone is not a replay defence.","§2.3"],
+    ["Access-token-in-memory rule","The token persists across reload and becomes exfiltratable after an XSS, rather than dying with the page.","§2.1"],
+    ["DPoP key cleanup on logout","A stale key remains usable after logout — the next session or an attacker can sign proofs with it.","§6.3 / §6.4"],
+    ["Unconditional local clear on logout failure","Tokens and DPoP keys survive a failed logout. This is the live candidate finding in LogoutService.","§6.4 · Appendix B"],
+    ["The sub / TXSUB transaction compare","Step-up hijack: an OTP gets completed against another user's parked transaction, and the payload executes.","§7"],
+    ["Transaction-cache 60-min TTL","A stale step-up outlives its session, so an approval can be replayed after the session that created it is gone.","§6.2 / §7"],
+    ["Server-side ID-token signature verification","Forge any <code>sub</code> and you get full authentication bypass. This is the critical Appendix B finding.","Appendix B #1"],
+    ["The 60-minute absolute timeout","A session on a compromised device lives indefinitely as long as the user keeps it active.","§6.2"],
+    ["Client-side credential encryption","The credential is visible to TLS-terminating middleboxes and can land in gateway logs. Narrow but real.","§3"]
+  ];
+  var host=document.getElementById("cards");
+  DRILL.forEach(function(d){
+    var b=document.createElement("button");
+    b.className="dcard"; b.type="button"; b.setAttribute("aria-expanded","false");
+    b.innerHTML='<span class="dcard-q"><span class="lbl">Remove this control</span><b>'+d[0]+'</b>'+
+      '<span class="dcard-hint">Click to reveal what breaks</span></span>'+
+      '<span class="dcard-a">'+d[1]+'<span class="ref">'+d[2]+'</span></span>';
+    b.addEventListener("click",function(){
+      b.setAttribute("aria-expanded", b.getAttribute("aria-expanded")==="true"?"false":"true");
+    });
+    host.appendChild(b);
+  });
+
+  /* ── modules ── */
+  var MODS=[
+    ["00","Foundations you must not skip","Symmetric vs asymmetric, preimage resistance (why sending SHA-256 of the verifier is safe), nonce vs timestamp vs counter as replay defences, the browser security model, and what TLS does <em>not</em> protect.",["2–3 hrs"],
+     "Why does storing the access token in memory help against XSS at all, given the payload runs in the same page? (It doesn't stop an active exploit — it stops persistence and exfiltration after reload. Saying that precisely is a level-2 marker.)"],
+    ["01","OAuth 2.0 core","Roles mapped onto §1. Why authorization code and nothing else — implicit and ROPC are dead, and you should be able to say why each died. Public vs confidential clients, exact-match redirect URIs, <code>state</code>, refresh rotation and reuse detection.",["RFC 6749","RFC 6750","RFC 9700","RFC 8252","§2.1 §2.4 §6.1"],
+     "Northwind keeps refresh tokens in sessionStorage. What does the BFF pattern do instead, and why is it now the working group's recommendation? What does Northwind lose by not using it — given Atlas BFF is already sitting there, BFF-shaped?"],
+    ["02","OpenID Connect","ID token vs access token — <strong>audience is the whole point</strong>. The full validation checklist, then re-read Appendix B row 1: a server trusting <code>sub</code> from an unverified <code>id_token_hint</code> is exactly what that checklist prevents.",["OIDC Core §15","RP-Initiated Logout","Front/Back-channel logout","Appendix B #1"],
+     "Northwind's logout is client-orchestrated. What would back-channel logout change, and how would it fix the \"failed logout leaves tokens behind\" risk structurally rather than by convention?"],
+    ["03","PKCE and request integrity","S256 vs plain and why plain must be rejected. <strong>What PKCE protects and what it does not</strong> — the boundary that makes the alg:none request object a real finding anyway. Then JAR for signing, PAR for removing front-channel tampering entirely.",["RFC 7636","RFC 9101","RFC 9126","RFC 9207","§2.2"],
+     "Given idp_v2 already uses RS256, what's the migration risk in flipping spapublicclient off none? Client must actually sign; JWKS distribution; rollback; staged per-client cutover. Write the plan — that's what an architect is asked for, not the finding."],
+    ["04","JWT / JOSE and the alg:none family","The alg:none attack, HS256/RS256 confusion, kid injection, jku/x5u SSRF. <strong>Always use an allow-list; never trust the header's alg.</strong> Then read <code>JWTtoMap.js#L36</code> accepting <code>alg==\"none\"</code>. JWKS rotation, clock skew as a security parameter, JWT vs opaque + introspection.",["RFC 7519","RFC 7515","RFC 8725","RFC 7662","Appendix B"],
+     "Where should signature verification live in a system with a gateway AND an IdP AND backend services? Argue gateway-terminated vs defence-in-depth at each hop, with the cost of each."],
+    ["05","DPoP and sender-constrained tokens","<strong>Your differentiator.</strong> Proof structure and why each claim exists. The <code>cnf</code>/<code>jkt</code> thumbprint that actually binds token to key. DPoP-Nonce vs a time window. Replay caches. Key storage: OS keystore vs non-extractable CryptoKey — and why neither stops an XSS <em>signing oracle</em>. Plus the lifecycle lock, which most security engineers miss entirely.",["RFC 9449","RFC 8705","§2.3 §7"],
+     "Compare DPoP vs mTLS vs BFF-with-cookies for a retail bank SPA + mobile app. Score XSS resilience, theft blast radius, ops complexity (cert lifecycle!), mobile support, gateway support, latency. Pick one and state what would change your mind. <strong>Rehearse this — it's the archetypal senior-architect question in this domain.</strong>"],
+    ["06","Browser storage and the client threat model","The storage matrix — who can read it, does it survive reload, is it sent automatically. Why cookies create CSRF and bearer headers create XSS exposure. CSP as the actual XSS control.",["ASVS v5","OAuth for Browser-Based Apps","§2.1 §2.4"],
+     "The MFE owns the password screen and is federated in at runtime. Threat-model that supply chain: SRI, pinned versions, CSP, build provenance, isolated origin. What would you require?"],
+    ["07","Session management, timeouts, logout","Idle vs absolute and why you need both — Northwind is <em>stricter</em> than the NIST AAL2 baseline, so know that to defend the UX cost. Two-session architectures and orphaned sessions. Revocation vs Gateway's cached PDP result — <strong>that cache is a revocation-latency hole; quantify it.</strong>",["RFC 7009","NIST 800-63B §4 §7","§6"],
+     "Design a logout that is correct when three of four calls fail. (Back-channel logout + short access TTL + refresh revocation + unconditional local clear — note how each layer covers a different failure.)"],
+    ["08","Step-up authentication and risk","Step-up as a token property (<code>acr</code>) vs a transaction property — Northwind does the second. Recognise the transaction cache + TXSUB rebind as hand-rolled <strong>dynamic linking</strong>. Then model the attack the sub-comparison defeats, and note it couldn't be found in code.",["RFC 9470","acr / amr","PSD2 SCA","CAEP / SSF","§7"],
+     "Northwind fails a transaction outright on \"Review\" — no retry, no soft-decline. Defend that to a PM whose false-positive rate is hurting conversion, then propose a design that keeps the security property while improving UX."],
+    ["09","Federation and SSO","SAML vs OIDC, why signature-wrapping attacks exist, why SAML persists in partner integrations. Token exchange as the Wealth SSO mechanism. <strong>Atlas as an external IdP for National Sign-In is a different trust direction entirely</strong> — different threat model, different obligations.",["RFC 8693","SAML 2.0 Web SSO","RFC 8252","§8"],
+     "Internalise the §8 lesson: \"SSO doesn't use DPoP\" is not automatically a finding. An architect distinguishes an architectural boundary from a gap."],
+    ["10","Credentials, identifiers, directories","Password storage delegated to Directory — and what you'd still verify. <strong>Identifier design is the heart of §9</strong>: card number as login is enumerable; the move to GUID-based aliases is security architecture driven by a regulator. Pairwise identifiers in OIDC are the same idea.",["§3 §9","the prudential regulator"],
+     "What does client-side credential encryption add on top of TLS? (Defence against TLS-terminating middleboxes and credentials in gateway logs — legitimate but narrow. It does <em>not</em> protect against a compromised page. Know the honest answer.)"],
+    ["11","Event-driven security telemetry","EventBus → Splunk / Datamart / Warehouse is the <strong>audit and detection layer</strong>, a first-class architectural concern rather than plumbing. What must never appear in an event: verifiers, tokens, raw PAN, biometric material.",["§1 §3 §4 §6.3"],
+     "What does a duplicated LogoutEvent or a lost LoginFailure do to lockout counting and to the fraud models downstream?"],
+    ["12","Where this is all going","FIDO2 / WebAuthn / passkeys subsuming NativeMFA's model more cleanly. CAEP replacing fixed absolute timeouts with real-time revocation signals. BFF + HttpOnly cookies vs Northwind's DPoP-in-the-browser bet. Workload identity and token-per-hop.",["Forward-looking"],
+     "\"Here's what we built, here's what's replacing it, here's the migration cost\" — that sentence is what separates an architect from a senior engineer."]
+  ];
+  var mh=document.getElementById("mods");
+  MODS.forEach(function(m){
+    var d=document.createElement("div");
+    d.className="mod";
+    var tags=m[3].map(function(t){
+      var isRfc=/^(RFC|OIDC|NIST|ASVS|PSD2|OAuth|SAML|CAEP|acr)/.test(t);
+      return '<span class="tag'+(isRfc?" rfc":"")+'">'+t+'</span>';
+    }).join("");
+    d.innerHTML='<span class="mod-n">'+m[0]+'</span><div class="mod-b"><h4>'+m[1]+'</h4>'+
+      '<p>'+m[2]+'</p><div class="mod-meta">'+tags+'</div>'+
+      '<div class="ask"><b>Architect question</b>'+m[4]+'</div></div>'+
+      '<label class="done"><input type="checkbox" data-k="m'+m[0]+'">done</label>';
+    mh.appendChild(d);
+  });
+  /* wire the module checkboxes into the same progress store */
+  [].slice.call(mh.querySelectorAll(".done input")).forEach(function(b){
+    b.checked=!!state.done[b.dataset.k];
+    boxes.push(b);
+    b.addEventListener("change",function(){state.done[b.dataset.k]=b.checked;save(state);refresh();});
+  });
+  refresh();
+})();
+</script>
+</body>
+</html>

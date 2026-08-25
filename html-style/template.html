@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Title: short, specific noun phrase. Names the page like a product. -->
+<title>Page Name</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- If fonts.googleapis.com is blocked on this network, delete these two links.
+     The fallback stack in base.css is built to hold up alone. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600;700&display=swap">
+<style>
+/* paste base.css here, then page-specific rules below it */
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap" style="display:flex;align-items:center;gap:14px;padding-top:10px;padding-bottom:10px">
+    <b style="font-family:var(--f-display);font-size:15px">Page Name</b>
+    <button class="btn" id="tg" style="margin-left:auto" aria-label="Toggle theme">Theme</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div style="padding:64px 0 48px;border-bottom:1px solid var(--line)">
+    <div class="kicker ac" style="margin-bottom:18px">Eyebrow label</div>
+    <h1 style="margin-bottom:22px;max-width:16ch">The one-line thesis of this page</h1>
+    <p class="lede">The paragraph that tells a reader what this is and why it matters,
+      before any detail. Keep it under about fifty words.</p>
+  </div>
+
+  <section>
+    <h2 style="margin-bottom:18px">A section</h2>
+    <div class="stack">
+      <p class="measure">Running text sits inside <code>.measure</code> so it never exceeds 70
+        characters. Everything else can be wider.</p>
+
+      <div class="grid g3">
+        <div class="stat"><b class="num">21</b><span>repos</span></div>
+        <div class="stat"><b class="num">30</b><span>days</span></div>
+        <div class="stat"><b class="num">5</b><span>verdicts</span></div>
+      </div>
+
+      <div class="note"><span class="l">Callout</span>
+        <p>Use <code>.note</code> for asides, <code>.note.warn</code> and <code>.note.bad</code>
+          when the content is a caveat or a risk.</p></div>
+
+      <div class="tw"><table>
+        <thead><tr><th>Thing</th><th>Status</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td><strong>First</strong></td><td><span class="pill p-ok">verified</span></td><td>Tables always live inside <code>.tw</code>.</td></tr>
+          <tr><td><strong>Second</strong></td><td><span class="pill p-wn">partial</span></td><td>So the page body never scrolls sideways.</td></tr>
+          <tr><td><strong>Third</strong></td><td><span class="pill p-bd">missing</span></td><td>Status is form plus value, never colour alone.</td></tr>
+        </tbody>
+      </table></div>
+
+      <ol class="steps">
+        <li><strong>Numbered steps</strong> only when the content is genuinely a sequence.</li>
+        <li>Otherwise use a plain list — numbering that means nothing is decoration.</li>
+      </ol>
+
+      <p class="pull">A pull quote for the one idea that must survive the page.</p>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  var r=document.documentElement,b=document.getElementById("tg");
+  try{var s=localStorage.getItem("theme");if(s)r.setAttribute("data-theme",s)}catch(e){}
+  b.addEventListener("click",function(){
+    var c=r.getAttribute("data-theme");
+    var n=c==="dark"?"light":c==="light"?"dark":
+      (window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"light":"dark");
+    r.setAttribute("data-theme",n);
+    try{localStorage.setItem("theme",n)}catch(e){}
+  });
+})();
+</script>
+</body>
+</html>

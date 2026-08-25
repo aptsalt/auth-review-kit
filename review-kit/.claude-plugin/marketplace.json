@@ -1,0 +1,13 @@
+{
+  "name": "reviewer-tools",
+  "owner": {
+    "name": "D. Kandari"
+  },
+  "plugins": [
+    {
+      "name": "reliability-review",
+      "source": "./",
+      "description": "Repeatable performance + security review across many repos, with evidence discipline and Dynatrace telemetry correlation."
+    }
+  ]
+}

@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Corroborated Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600;700&display=swap">
+<style>
+:root{
+  --bg:#F2F4F7; --sf:#FFFFFF; --sf2:#E9EDF3; --sf3:#DDE3EC;
+  --ink:#111823; --ink2:#46546B; --ink3:#6E7C93;
+  --line:#D4DBE5; --line2:#BDC7D6;
+  --ac:#1B4F9C; --ac2:#123A78; --acs:#E3ECFA;
+  --ok:#136B41; --oks:#DEF0E6;
+  --wn:#8A5D00; --wns:#F8EBD2;
+  --bd:#A81F18; --bds:#FAE3E1;
+  --f-d:"IBM Plex Serif",Georgia,serif;
+  --f-b:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-m:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0D131B; --sf:#141D28; --sf2:#1B2633; --sf3:#243040;
+  --ink:#E9EEF5; --ink2:#A9B6C8; --ink3:#7C8CA3;
+  --line:#293645; --line2:#3A4A5D;
+  --ac:#79ADFF; --ac2:#A6C8FF; --acs:#152540;
+  --ok:#5CCB90; --oks:#122A20;
+  --wn:#E6B44A; --wns:#2A2415;
+  --bd:#FF847B; --bds:#2E1A19;
+}}
+:root[data-theme="dark"]{
+  --bg:#0D131B; --sf:#141D28; --sf2:#1B2633; --sf3:#243040;
+  --ink:#E9EEF5; --ink2:#A9B6C8; --ink3:#7C8CA3;
+  --line:#293645; --line2:#3A4A5D;
+  --ac:#79ADFF; --ac2:#A6C8FF; --acs:#152540;
+  --ok:#5CCB90; --oks:#122A20;
+  --wn:#E6B44A; --wns:#2A2415;
+  --bd:#FF847B; --bds:#2E1A19;
+}
+*{box-sizing:border-box}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-b);
+  font-size:17px;line-height:1.68;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--f-d);margin:0;line-height:1.2;text-wrap:balance;letter-spacing:-.015em}
+p{margin:0}
+strong{font-weight:600;color:var(--ink)}
+em{font-style:italic}
+code{font-family:var(--f-m);font-size:.85em;background:var(--sf2);border:1px solid var(--line);
+  border-radius:5px;padding:.08em .38em;white-space:nowrap}
+a{color:var(--ac)}
+:focus-visible{outline:2px solid var(--ac);outline-offset:3px;border-radius:4px}
+
+/* nav */
+.bar{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 90%,transparent);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.bar-in{max-width:1120px;margin:0 auto;padding:9px 26px;display:flex;align-items:center;gap:14px}
+.bar b{font-family:var(--f-d);font-size:15px;font-weight:600}
+.bar nav{margin-left:auto;display:flex;gap:3px;flex-wrap:wrap}
+.bar a{font-family:var(--f-m);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink3);text-decoration:none;padding:5px 9px;border-radius:6px}
+.bar a:hover{color:var(--ink);background:var(--sf2)}
+.tg{background:var(--sf2);border:1px solid var(--line);color:var(--ink2);width:31px;height:31px;
+  border-radius:7px;cursor:pointer;font-size:14px;line-height:1}
+@media(max-width:800px){.bar nav{display:none}}
+
+.wrap{max-width:1120px;margin:0 auto;padding:0 26px}
+.measure{max-width:70ch}
+
+/* hero */
+.hero{padding:78px 0 60px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--f-m);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ac);margin-bottom:22px}
+.hero h1{font-size:clamp(38px,6.2vw,66px);font-weight:700;margin-bottom:26px;max-width:16ch}
+.lede{font-size:clamp(19px,2.3vw,23px);line-height:1.5;color:var(--ink2);max-width:56ch}
+.lede b{color:var(--ink)}
+.facts{display:flex;gap:38px;flex-wrap:wrap;margin-top:44px;padding-top:26px;border-top:1px solid var(--line)}
+.fact b{display:block;font-family:var(--f-m);font-size:31px;font-variant-numeric:tabular-nums;
+  color:var(--ac);line-height:1.1}
+.fact span{font-family:var(--f-m);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink3)}
+
+/* sections */
+section{padding:62px 0;border-bottom:1px solid var(--line)}
+.shead{display:flex;gap:22px;align-items:baseline;margin-bottom:26px}
+.snum{font-family:var(--f-m);font-size:12px;color:var(--ac);letter-spacing:.1em;min-width:30px;padding-top:4px}
+.shead h2{font-size:clamp(25px,3.4vw,34px);font-weight:600}
+.kick{font-family:var(--f-m);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--ink3);margin-bottom:12px}
+.stack{display:flex;flex-direction:column;gap:22px}
+.stack.tight{gap:14px}
+
+.pull{font-family:var(--f-d);font-size:clamp(21px,2.7vw,27px);line-height:1.42;color:var(--ink);
+  border-left:3px solid var(--ac);padding:4px 0 4px 26px;max-width:44ch}
+.pull.warn{border-left-color:var(--bd)}
+
+ul.b{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:11px;color:var(--ink2);max-width:70ch}
+ul.b li::marker{color:var(--ink3)}
+ol.n{margin:0;padding-left:0;list-style:none;counter-reset:x;display:flex;flex-direction:column;gap:15px;max-width:72ch}
+ol.n>li{counter-increment:x;position:relative;padding-left:42px;color:var(--ink2)}
+ol.n>li::before{content:counter(x);position:absolute;left:0;top:2px;width:27px;height:27px;
+  border-radius:8px;background:var(--acs);color:var(--ac);border:1px solid color-mix(in srgb,var(--ac) 28%,transparent);
+  font-family:var(--f-m);font-size:12px;display:grid;place-items:center;font-weight:500}
+
+.card{background:var(--sf);border:1px solid var(--line);border-radius:12px;padding:22px 25px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+.card h4{font-size:18px;margin-bottom:9px}
+.card p{font-size:15.5px;color:var(--ink2)}
+
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--sf)}
+table{border-collapse:collapse;width:100%;font-size:15px;min-width:600px}
+th{text-align:left;font-family:var(--f-m);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink3);font-weight:500;padding:12px 17px;border-bottom:1px solid var(--line);
+  background:var(--sf2);white-space:nowrap}
+td{padding:13px 17px;border-bottom:1px solid var(--line);color:var(--ink2);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td strong{color:var(--ink)}
+
+.pill{display:inline-flex;font-family:var(--f-m);font-size:10.5px;letter-spacing:.05em;
+  text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid;white-space:nowrap;font-weight:500}
+.p-ok{color:var(--ok);background:var(--oks);border-color:color-mix(in srgb,var(--ok) 35%,transparent)}
+.p-wn{color:var(--wn);background:var(--wns);border-color:color-mix(in srgb,var(--wn) 35%,transparent)}
+.p-bd{color:var(--bd);background:var(--bds);border-color:color-mix(in srgb,var(--bd) 35%,transparent)}
+.p-ac{color:var(--ac);background:var(--acs);border-color:color-mix(in srgb,var(--ac) 35%,transparent)}
+.p-nu{color:var(--ink3);background:var(--sf2);border-color:var(--line2)}
+
+.note{border-left:3px solid var(--ac);background:var(--acs);border-radius:0 10px 10px 0;
+  padding:17px 22px;max-width:72ch}
+.note.bad{border-left-color:var(--bd);background:var(--bds)}
+.note.warn{border-left-color:var(--wn);background:var(--wns)}
+.note .l{font-family:var(--f-m);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  display:block;margin-bottom:7px;font-weight:500;color:var(--ac)}
+.note.bad .l{color:var(--bd)} .note.warn .l{color:var(--wn)}
+.note p{font-size:15.5px;color:var(--ink2)}
+
+/* formula */
+.eq{background:var(--sf);border:1px solid var(--line);border-radius:12px;padding:30px 26px;text-align:center}
+.eq .f{font-family:var(--f-m);font-size:clamp(15px,2.3vw,21px);color:var(--ink);letter-spacing:.01em;
+  display:flex;gap:11px;justify-content:center;flex-wrap:wrap;align-items:center}
+.eq .f i{font-style:normal;color:var(--ink3)}
+.eq .f b{font-weight:500;padding:4px 11px;border-radius:7px;background:var(--acs);color:var(--ac)}
+.eq .cap{font-family:var(--f-m);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);margin-top:16px}
+
+.bars{display:flex;flex-direction:column;gap:9px;margin-top:8px}
+.bar-row{display:grid;grid-template-columns:132px 1fr 46px;gap:13px;align-items:center}
+.bar-row .lb{font-family:var(--f-m);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2)}
+.track{position:relative;height:22px;background:var(--sf2);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.track .mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line2)}
+.fillp{position:absolute;left:50%;top:2px;bottom:2px;background:var(--ac);border-radius:0 4px 4px 0;opacity:.85}
+.filln{position:absolute;top:2px;bottom:2px;background:var(--ink3);border-radius:4px 0 0 4px;opacity:.55}
+.bar-row .vl{font-family:var(--f-m);font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums;text-align:right}
+.axis{display:grid;grid-template-columns:132px 1fr 46px;gap:13px;margin-top:4px}
+.axis span{font-family:var(--f-m);font-size:9.5px;color:var(--ink3);letter-spacing:.08em;
+  grid-column:2;display:flex;justify-content:space-between}
+
+/* audience */
+.aud{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--sf)}
+.aud-h{background:var(--sf2);padding:13px 20px;border-bottom:1px solid var(--line);
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.aud-h b{font-family:var(--f-d);font-size:17px;font-weight:600}
+.aud-h span{font-family:var(--f-m);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+.aud-b{padding:19px 20px;display:flex;flex-direction:column;gap:14px}
+.aud-b .row{display:grid;grid-template-columns:88px 1fr;gap:14px;align-items:start}
+.aud-b .row>b{font-family:var(--f-m);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink3);font-weight:500;padding-top:4px}
+.aud-b .row>div{font-size:15.5px;color:var(--ink2)}
+.aud-b .row.ask>div{color:var(--ink);font-weight:500}
+
+/* agenda */
+.ag{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:12px;
+  overflow:hidden;background:var(--sf)}
+.ag-r{display:grid;grid-template-columns:64px 1fr;gap:18px;padding:15px 20px;border-bottom:1px solid var(--line)}
+.ag-r:last-child{border-bottom:0}
+.ag-r .t{font-family:var(--f-m);font-size:12px;color:var(--ac);font-variant-numeric:tabular-nums;padding-top:2px}
+.ag-r .c b{display:block;font-family:var(--f-d);font-size:16.5px;font-weight:600;margin-bottom:4px}
+.ag-r .c p{font-size:15px;color:var(--ink2)}
+
+.dont{display:grid;gap:11px;grid-template-columns:repeat(auto-fit,minmax(255px,1fr))}
+.dont div{border:1px solid color-mix(in srgb,var(--bd) 26%,transparent);background:var(--bds);
+  border-radius:10px;padding:15px 18px;font-size:15px;color:var(--ink2)}
+.dont div b{display:block;color:var(--bd);font-family:var(--f-m);font-size:10px;letter-spacing:.11em;
+  text-transform:uppercase;margin-bottom:6px}
+
+footer{padding:40px 0 80px;color:var(--ink3);font-size:14.5px;max-width:70ch}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="bar-in">
+    <b>Corroborated Review</b>
+    <nav>
+      <a href="#why">Why</a><a href="#method">Method</a><a href="#model">Model</a>
+      <a href="#present">Presenting</a><a href="#agenda">Agenda</a>
+    </nav>
+    <button class="tg" id="tg" aria-label="Toggle theme">&#9686;</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+<div class="hero">
+  <div class="eyebrow">Review methodology &middot; briefing</div>
+  <h1>A review that production already agrees with</h1>
+  <p class="lede">A code review tells you what <em>could</em> happen. Production telemetry tells you what <em>did</em>.
+    Almost nobody joins them — so findings arrive as opinion, and get prioritised by argument.
+    <b>Joining them changes which findings get fixed first, and how fast the room agrees.</b></p>
+  <div class="facts">
+    <div class="fact"><b>21</b><span>repos reviewed</span></div>
+    <div class="fact"><b>3</b><span>weeks</span></div>
+    <div class="fact"><b>30</b><span>days of telemetry joined</span></div>
+    <div class="fact"><b>19</b><span>review dimensions</span></div>
+    <div class="fact"><b>5</b><span>corroboration verdicts</span></div>
+  </div>
+</div>
+
+<!-- WHY -->
+<section id="why">
+  <div class="shead"><span class="snum">00</span><h2>The problem with reviews as they are normally run</h2></div>
+  <div class="stack">
+    <p class="measure">Every engineer has received a review document and quietly ignored it. Not because the findings
+      were wrong — because of how they arrived.</p>
+    <ul class="b">
+      <li><strong>They read as opinion.</strong> A list of concerns with no way to tell which are real.</li>
+      <li><strong>Severity is guesswork.</strong> Everything is High, so nothing is.</li>
+      <li><strong>The team argues rather than fixes.</strong> Half the meeting is spent litigating whether an item counts.</li>
+      <li><strong>Nobody knows what was <em>not</em> looked at.</strong> Silence gets read as a pass.</li>
+      <li><strong>It goes stale immediately</strong> and is never re-run, because re-running means redoing it by hand.</li>
+    </ul>
+    <p class="pull">The findings are perishable. The method is the asset.</p>
+    <p class="measure">Seven strategies fix those five failures. Each one is small. Together they change a review from a
+      document people tolerate into a thing they act on.</p>
+  </div>
+</section>
+
+<!-- METHOD -->
+<section id="method">
+  <div class="shead"><span class="snum">01</span><h2>Evidence discipline</h2></div>
+  <div class="stack">
+    <div class="kick">The habit that makes a reviewer trusted</div>
+    <p class="measure">Every claim carries one of three markers. The third one is the whole idea.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Marker</th><th>Means</th><th>You may</th></tr></thead>
+      <tbody>
+        <tr><td><span class="pill p-ok">verified</span></td><td>Read the code path end to end, in this workspace</td><td>Raise a finding</td></tr>
+        <tr><td><span class="pill p-wn">partial</span></td><td>One side is present; the counterpart lives elsewhere</td><td>Raise a finding, stated as conditional</td></tr>
+        <tr><td><span class="pill p-bd">needs evidence</span></td><td>The deciding code or config is not in the workspace</td><td><strong>Not a finding.</strong> Record a gap naming the artifact required.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><span class="l">Why this earns the room</span>
+      <p><strong>Needs-evidence is not "probably fine" and it is not "a vulnerability."</strong> It is a request with an
+        address on it. Claiming a vulnerability you cannot prove loses the room permanently. Marking something clean that
+        you could not actually see is worse — it is the one failure mode that discredits an entire review. Refusing to do
+        either is what makes the findings you <em>do</em> raise land.</p></div>
+    <p class="measure">There is a second benefit nobody expects: the gap list becomes the most useful page in the document
+      for a manager, because every item on it is something only they can unblock.</p>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">02</span><h2>Dimensions, not vibes</h2></div>
+  <div class="stack">
+    <p class="measure">"Review this repo" produces whatever the reviewer happened to notice. Nineteen named lenses —
+      each with a checklist, its telltale patterns, and a defined scope — produce something comparable across repos and
+      repeatable by someone else.</p>
+    <div class="grid g3">
+      <div class="card"><h4>Security</h4><p>secret-leak &middot; token-integrity &middot; token-storage &middot; authz-decision &middot; session-lifecycle &middot; client-crypto &middot; xss-surface &middot; supply-chain &middot; config-drift</p></div>
+      <div class="card"><h4>Reliability</h4><p>outbound-resilience &middot; fail-mode &middot; error-taxonomy &middot; state-cleanup &middot; delivery-semantics</p></div>
+      <div class="card"><h4>Performance</h4><p>data-access-perf &middot; cache-correctness &middot; concurrency &middot; resource-leak &middot; perf-render</p></div>
+    </div>
+    <p class="measure">Which dimensions run is decided by the repo's <em>tier</em> and <em>kind</em>, not by taste. A config
+      repo and a browser app get genuinely different passes — and filing "no CSP" against a config repo costs you
+      credibility for the findings that matter.</p>
+    <div class="note"><span class="l">The detail that makes step 04 possible</span>
+      <p>Each dimension also declares <strong>what production signal it would produce</strong> — its symptom class.
+        An <code>outbound-resilience</code> defect shows up as service-slowdown or timeout; <code>data-access-perf</code>
+        shows up as a database hotspot. Writing that down once turns correlation from a judgement call into a join.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">03</span><h2>Findings that survive contact</h2></div>
+  <div class="stack">
+    <p class="measure">Before anything is written down as a finding, it answers four questions. Most candidates die at
+      question two or three, and that is the point.</p>
+    <ol class="n">
+      <li><strong>Where exactly?</strong> File, line, and the specific expression.</li>
+      <li><strong>What is the concrete failure?</strong> Real inputs or state, leading to a wrong outcome. If you cannot
+        write that sentence, you have a code smell — not a finding.</li>
+      <li><strong>What guards it today?</strong> Walk up the call chain. A validation, a gateway policy, a framework
+        default may already prevent it. If the guard lives outside what you can see, the finding drops to partial.</li>
+      <li><strong>Would a reasonable engineer disagree?</strong> If yes, write their objection into the finding — and
+        answer it there.</li>
+    </ol>
+    <p class="pull">A short list that holds up beats a long list that gets picked apart.</p>
+    <p class="measure">That fourth question is the one that changes meetings. When the owning team's best objection is
+      already in the document with an answer, the conversation starts at "when do we fix it" instead of "is this even real".</p>
+  </div>
+</section>
+
+<!-- MODEL -->
+<section id="model">
+  <div class="shead"><span class="snum">04</span><h2>The correlation model</h2></div>
+  <div class="stack">
+    <div class="kick">The centrepiece &mdash; join the review to production</div>
+    <p class="measure">Every finding gets exactly one verdict against the last 30 days of telemetry. Five verdicts,
+      because the obvious two are a trap.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Verdict</th><th>Criteria</th><th>What it lets you say</th></tr></thead>
+      <tbody>
+        <tr><td><span class="pill p-ok">observed</span></td><td>Same service <em>and</em> a signature match — the problem names the exact statement, exception or endpoint</td><td><strong>"This is happening in production."</strong> No further persuasion needed.</td></tr>
+        <tr><td><span class="pill p-ac">consistent</span></td><td>Same service, and a problem in this dimension's symptom class</td><td>"Production shows the symptom this defect would produce." Suggestive, not proof.</td></tr>
+        <tr><td><span class="pill p-nu">no signal</span></td><td>Instrumented, in scope, quiet for the window</td><td>"Not observed in 30 days." Low frequency &mdash; <strong>never</strong> "not real".</td></tr>
+        <tr><td><span class="pill p-bd">blind</span></td><td>Uninstrumented, unmapped, or filtered out of the pull</td><td>"We cannot see this either way." Absence proves nothing.</td></tr>
+        <tr><td><span class="pill p-bd">unobservable</span></td><td>This class of defect produces no telemetry even when exploited</td><td>"Monitoring cannot corroborate this by design."</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="eq">
+      <div class="f"><b>priority</b><i>=</i><b>severity</b><i>&times;</i><b>corroboration</b><i>&times;</i><b>blast radius</b></div>
+      <div class="cap">rank by this, not by severity alone</div>
+    </div>
+
+    <div class="card">
+      <div class="kick" style="margin-bottom:14px">Corroboration weight &mdash; note the asymmetry</div>
+      <div class="bars">
+        <div class="bar-row"><span class="lb">Observed</span><span class="track"><span class="mid"></span><span class="fillp" style="width:50%"></span></span><span class="vl">&times;2.0</span></div>
+        <div class="bar-row"><span class="lb">Consistent</span><span class="track"><span class="mid"></span><span class="fillp" style="width:20%"></span></span><span class="vl">&times;1.4</span></div>
+        <div class="bar-row"><span class="lb">Unobservable</span><span class="track"><span class="mid"></span></span><span class="vl">&times;1.0</span></div>
+        <div class="bar-row"><span class="lb">Blind</span><span class="track"><span class="mid"></span></span><span class="vl">&times;1.0</span></div>
+        <div class="bar-row"><span class="lb">No signal</span><span class="track"><span class="mid"></span><span class="filln" style="width:10%;left:40%"></span></span><span class="vl">&times;0.8</span></div>
+      </div>
+      <div class="axis"><span><span>&larr; demotes</span><span>neutral</span><span>promotes &rarr;</span></span></div>
+    </div>
+
+    <p class="pull warn">Telemetry promotes. It never absolves.</p>
+
+    <div class="note bad"><span class="l">The trap this exists to prevent</span>
+      <p>A forged token returns <code>200</code>. A leaked secret throws no exception. A missing authorization check
+        succeeds every single time it is exploited. <strong>The most severe findings in most systems are exactly the ones
+        a green dashboard is silent about</strong> — so silence is never allowed to demote them. Observed doubles a
+        finding's priority; no-signal removes only a fifth; blind and unobservable remove nothing at all. That asymmetry
+        is the ethic of the whole method, and it is the sentence to say out loud in the meeting.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">05</span><h2>Read it backwards</h2></div>
+  <div class="stack">
+    <p class="measure">Correlation is bidirectional, and most people only run one direction. Walking the telemetry that
+      matched <em>no</em> finding is where the genuinely new information is.</p>
+    <div class="grid g3">
+      <div class="card"><h4>On a reviewed repo</h4><p>Either the review missed something, or it is infrastructure rather than code. Say which — the first case is a gap to go close.</p></div>
+      <div class="card"><h4>On an unreviewed repo</h4><p>Production is telling you which repo to onboard next. That is a prioritisation signal you did not have to argue for.</p></div>
+      <div class="card"><h4>On an unmapped service</h4><p>Nobody has connected that service to a codebase. A gap in the estate map itself.</p></div>
+    </div>
+    <p class="measure">This is the section that stops the review being a one-way audit. It surfaces the reviewer's own
+      misses, which is uncomfortable — and is exactly why the team believes the rest of it.</p>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">06</span><h2>Coverage honesty</h2></div>
+  <div class="stack">
+    <p class="measure">A board that shows only findings implies everything else is fine. Four things have to be as
+      visible as the findings themselves: repos not yet reviewed, dimensions deliberately skipped, evidence gaps
+      outstanding, and services where telemetry can see nothing at all.</p>
+    <div class="note warn"><span class="l">Two words that must never be confused</span>
+      <p><strong>Blind is not no-signal.</strong> One means "we looked and it was quiet". The other means "we cannot
+        look". Conflating them turns a coverage report into a false assurance — and it is the single most common way
+        this kind of exercise misleads the people who commissioned it.</p></div>
+    <p class="measure">There is a bonus in it. Collect the blind list across the estate and you have not written a
+      caveat — you have written the <strong>observability roadmap</strong>, with each entry naming the service to
+      instrument and why it matters. That is frequently the most actionable artifact the whole review produces, and it
+      belongs to a team that never expected anything from you.</p>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">07</span><h2>Repeatable, not heroic</h2></div>
+  <div class="stack">
+    <p class="measure">Three weeks of one person reading code is not a process. It becomes one when the knowledge is
+      split into three layers that change at different rates.</p>
+    <div class="grid g3">
+      <div class="card"><h4>Method</h4><p>Dimensions, verdicts, templates, the four questions. Generic. Never changes per client.</p></div>
+      <div class="card"><h4>Profile</h4><p>Architecture, vocabulary, tiers, sensitive paths, severity policy, out-of-scope. One file. Swappable.</p></div>
+      <div class="card"><h4>Registry</h4><p>Per repo: reviewed date, dimensions run, findings, evidence gaps, telemetry mapping. The only state.</p></div>
+    </div>
+    <p class="measure">Adding the twenty-second repo then stops being a favour someone does and becomes a defined
+      pipeline: register it, map it to its telemetry (or declare it blind, deliberately), index it, queue its dimensions,
+      review, correlate, update the index. A teammate can run it. So can you, six months from now, having forgotten
+      everything.</p>
+    <p class="pull">If you are editing the method to fit a client, that content belongs in the profile instead.</p>
+  </div>
+</section>
+
+<!-- PRESENTING -->
+<section id="present">
+  <div class="shead"><span class="snum">08</span><h2>How to present this</h2></div>
+  <div class="stack">
+    <div class="kick">The arc &mdash; three acts, in this order</div>
+    <ol class="n">
+      <li><strong>The join, not the findings.</strong> Open with the idea: two evidence sources that are normally kept
+        apart. You are not presenting a list of problems, you are presenting a way of knowing which problems are real.
+        This framing decides whether the room listens or gets defensive in the first ninety seconds.</li>
+      <li><strong>One corroborated example, end to end.</strong> A single finding: here is the code, here is the failure,
+        here is your own Dynatrace showing it. Watching a static finding turn into an observed incident is the moment
+        the method sells itself. One example is enough — three is a lecture.</li>
+      <li><strong>The ask.</strong> Never end on findings. End on what you need: access to close specific gaps, an owner
+        for the top items, agreement on what runs next.</li>
+    </ol>
+
+    <div class="kick" style="margin-top:16px">Tailor the same material per audience</div>
+
+    <div class="stack tight">
+      <div class="aud">
+        <div class="aud-h"><b>Your team</b><span>peers, the people who own the code</span></div>
+        <div class="aud-b">
+          <div class="row"><b>Lead with</b><div>The method, and the fact that it produces a <em>short</em> list. Their real fear is a hundred tickets landing on their sprint.</div></div>
+          <div class="row"><b>Emphasise</b><div>The four questions, especially "what guards it today" and the written-down objection. Show them you tried to prove each finding wrong first.</div></div>
+          <div class="row"><b>Avoid</b><div>Anything that reads as a scoreboard against them. Say "the system" and "we", never "you shipped this".</div></div>
+          <div class="row ask"><b>The ask</b><div>Adopt the dimension checklist in PR review, and take ownership of the top corroborated items.</div></div>
+        </div>
+      </div>
+
+      <div class="aud">
+        <div class="aud-h"><b>Your lead / delivery manager</b><span>cares about risk and schedule</span></div>
+        <div class="aud-b">
+          <div class="row"><b>Lead with</b><div>Coverage and the priority queue. How much of the estate has been looked at, and the ranked list of what to fix first.</div></div>
+          <div class="row"><b>Emphasise</b><div>The evidence-gap list. Every item is blocked on access only they can grant — that turns your report into their action list.</div></div>
+          <div class="row"><b>Avoid</b><div>Technical depth. They do not need to know what a proof-of-possession token is to act on this.</div></div>
+          <div class="row ask"><b>The ask</b><div>Access to the missing repos and gateway config, and a decision on whether the remaining repos get reviewed.</div></div>
+        </div>
+      </div>
+
+      <div class="aud">
+        <div class="aud-h"><b>Security</b><span>they will test your rigour first</span></div>
+        <div class="aud-b">
+          <div class="row"><b>Lead with</b><div>The evidence markers. Security teams are used to receiving unverifiable claims, so the fact that you refuse to assert what you cannot see is your credibility.</div></div>
+          <div class="row"><b>Emphasise</b><div>The unobservable class. Explain that these produce no telemetry when exploited, and therefore need a detection strategy that is not APM.</div></div>
+          <div class="row"><b>Avoid</b><div>Overclaiming exploitability. "This is exploitable" without a demonstrated path is how you lose them for good.</div></div>
+          <div class="row ask"><b>The ask</b><div>A detection strategy for the unobservable class, and their judgement on the severity policy.</div></div>
+        </div>
+      </div>
+
+      <div class="aud">
+        <div class="aud-h"><b>Platform &amp; observability</b><span>the audience that gets a gift</span></div>
+        <div class="aud-b">
+          <div class="row"><b>Lead with</b><div>The blind list — and frame it as a finding about the monitoring estate, not a complaint about their tool.</div></div>
+          <div class="row"><b>Emphasise</b><div>That a share of the codebase cannot be corroborated either way, which caps what any incident review can ever conclude.</div></div>
+          <div class="row"><b>Avoid</b><div>Implying the tooling is bad. The gap is instrumentation coverage and service-to-repo mapping, not the product.</div></div>
+          <div class="row ask"><b>The ask</b><div>Instrument the named services, and establish a repo-to-service naming convention so this join stops being manual.</div></div>
+        </div>
+      </div>
+
+      <div class="aud">
+        <div class="aud-h"><b>Skip-level / executive</b><span>you get about four minutes</span></div>
+        <div class="aud-b">
+          <div class="row"><b>Lead with</b><div>One sentence: "we reviewed 21 repos and cross-checked every finding against 30 days of production data, so the list is ranked by what is actually costing us."</div></div>
+          <div class="row"><b>Emphasise</b><div>That the method is now repeatable by anyone on the team, and that coverage is measured rather than assumed.</div></div>
+          <div class="row"><b>Avoid</b><div>Verdict names, dimension names, any acronym. They will remember exactly one number — choose it deliberately.</div></div>
+          <div class="row ask"><b>The ask</b><div>Sponsorship to run it across the remaining estate, and the access that unblocks it.</div></div>
+        </div>
+      </div>
+
+      <div class="aud">
+        <div class="aud-h"><b>An interview or a next client</b><span>where this is worth the most</span></div>
+        <div class="aud-b">
+          <div class="row"><b>Lead with</b><div>The design decision, not the volume. "I built a review method where telemetry can promote a finding but never absolve one — here is why that asymmetry matters."</div></div>
+          <div class="row"><b>Emphasise</b><div>Judgement under uncertainty: the needs-evidence category, and refusing to mark clean what you could not see. That is a staff-level signal and very few candidates demonstrate it.</div></div>
+          <div class="row"><b>Avoid</b><div>Any client-confidential detail — findings, file paths, service names. The method is yours to talk about; the findings are not.</div></div>
+          <div class="row ask"><b>The ask</b><div>None. Let them ask the follow-up. They will.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kick" style="margin-top:20px">The three objections you will get</div>
+    <div class="tw"><table>
+      <thead><tr><th>They say</th><th>You answer</th></tr></thead>
+      <tbody>
+        <tr><td><strong>"This is just AI output / a linter."</strong></td><td>Every finding names a file and line, a concrete failure scenario, and what already guards it. A linter cannot tell you which of its hits your own production data is already showing. Then show the corroborated example.</td></tr>
+        <tr><td><strong>"We don't have capacity for this."</strong></td><td>That is what the ranking is for. Not a hundred items — the handful production is already paying for. Show the top five and nothing else.</td></tr>
+        <tr><td><strong>"Dynatrace shows nothing there, so it isn't real."</strong></td><td>The most important answer you will give. A forged token returns 200; a leaked secret throws nothing. Silence means one of four things and only one of them is "not happening". This is precisely why the model has five verdicts and not two.</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="kick" style="margin-top:20px">Do not do these</div>
+    <div class="dont">
+      <div><b>Don't open with the vulnerability list</b>People stop listening and start defending. The method first, always.</div>
+      <div><b>Don't screen-share unpatched criticals</b>Especially anything un-ticketed. Brief those to the right people privately, first.</div>
+      <div><b>Don't claim proof you don't have</b>One overclaimed finding, publicly demolished, takes the credible ones down with it.</div>
+      <div><b>Don't present coverage as complete</b>Say what was not looked at, every time. Volunteering your own limits is what makes the rest believable.</div>
+    </div>
+  </div>
+</section>
+
+<!-- AGENDA -->
+<section id="agenda">
+  <div class="shead"><span class="snum">09</span><h2>A 20-minute walkthrough</h2></div>
+  <div class="stack">
+    <p class="measure">If you get a team slot, this is the shape. It survives being cut to ten minutes by dropping
+      items 4 and 6.</p>
+    <div class="ag">
+      <div class="ag-r"><span class="t">0&ndash;2</span><div class="c"><b>The idea</b><p>Two evidence sources normally kept apart. Say the thesis, name the scope, do not show a single finding yet.</p></div></div>
+      <div class="ag-r"><span class="t">2&ndash;5</span><div class="c"><b>One finding, end to end</b><p>Code &rarr; failure scenario &rarr; the telemetry that names it. The whole pitch lives or dies here, so pick the cleanest example you have.</p></div></div>
+      <div class="ag-r"><span class="t">5&ndash;9</span><div class="c"><b>The five verdicts and the asymmetry</b><p>Why silence never absolves. Use the forged-token line — it is the one people repeat afterwards.</p></div></div>
+      <div class="ag-r"><span class="t">9&ndash;12</span><div class="c"><b>The priority queue</b><p>Top five only. Named owner suggestion against each. Resist showing the full list.</p></div></div>
+      <div class="ag-r"><span class="t">12&ndash;15</span><div class="c"><b>Coverage and blind spots</b><p>What was reviewed, what was skipped, what nothing can see. Hand the blind list to the platform team in the room.</p></div></div>
+      <div class="ag-r"><span class="t">15&ndash;17</span><div class="c"><b>How it repeats</b><p>Method / profile / registry. Adding repo twenty-two is a pipeline, not a favour. Thirty seconds, no tooling demo.</p></div></div>
+      <div class="ag-r"><span class="t">17&ndash;20</span><div class="c"><b>The ask</b><p>Access for the named gaps. Owners for the top five. A decision on the remaining repos. End here, not on findings.</p></div></div>
+    </div>
+    <div class="note"><span class="l">The one line to rehearse</span>
+      <p>If you say nothing else and they remember one sentence, make it this:
+        <strong>"Production telemetry is allowed to raise the alarm on a finding. It is never allowed to grant absolution."</strong>
+        It is short, it is memorable, and it is the whole method compressed.</p></div>
+  </div>
+</section>
+
+<footer>
+  Method briefing. Deliberately contains no findings, file paths or service names — the method travels,
+  the findings do not.
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var r=document.documentElement,b=document.getElementById("tg");
+  try{var s=localStorage.getItem("cr-theme");if(s)r.setAttribute("data-theme",s)}catch(e){}
+  b.addEventListener("click",function(){
+    var c=r.getAttribute("data-theme");
+    var n=c==="dark"?"light":c==="light"?"dark":
+      (window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"light":"dark");
+    r.setAttribute("data-theme",n);
+    try{localStorage.setItem("cr-theme",n)}catch(e){}
+  });
+})();
+</script>
+</body>
+</html>

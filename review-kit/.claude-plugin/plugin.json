@@ -1,0 +1,17 @@
+{
+  "name": "reliability-review",
+  "version": "1.0.0",
+  "description": "Repeatable performance + security review across many repos, with evidence discipline and Dynatrace telemetry correlation. Onboard a new repo, hunt issues by dimension, corroborate findings against live production signal, and track coverage across the estate.",
+  "author": {
+    "name": "D. Kandari"
+  },
+  "keywords": [
+    "code-review",
+    "security",
+    "performance",
+    "reliability",
+    "dynatrace",
+    "observability",
+    "correlation"
+  ]
+}

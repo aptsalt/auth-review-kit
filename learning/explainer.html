@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trace Walker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<style>
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --surface-2:#E9EDF3; --surface-3:#DFE5EE;
+  --ink:#131A24; --ink-2:#48566D; --ink-3:#6F7D94;
+  --line:#D4DBE5; --line-2:#BFC9D8;
+  --accent:#1B4F9C; --accent-soft:#E3ECFA;
+  --ok:#136B41; --ok-soft:#DEF0E6;
+  --partial:#8A5D00; --partial-soft:#F8EBD2;
+  --missing:#A81F18; --missing-soft:#FAE3E1;
+  --shadow:0 1px 2px rgba(19,26,36,.06),0 8px 24px -12px rgba(19,26,36,.18);
+  --f-display:"IBM Plex Serif",Georgia,serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E141C; --surface:#151E29; --surface-2:#1C2734; --surface-3:#243141;
+  --ink:#E8EDF4; --ink-2:#AAB7C9; --ink-3:#7E8DA4;
+  --line:#2A3746; --line-2:#3A4A5D;
+  --accent:#79ADFF; --accent-soft:#16263E;
+  --ok:#5CCB90; --ok-soft:#12291F;
+  --partial:#E6B44A; --partial-soft:#2B2415;
+  --missing:#FF847B; --missing-soft:#2E1A19;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -14px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  --bg:#0E141C; --surface:#151E29; --surface-2:#1C2734; --surface-3:#243141;
+  --ink:#E8EDF4; --ink-2:#AAB7C9; --ink-3:#7E8DA4;
+  --line:#2A3746; --line-2:#3A4A5D;
+  --accent:#79ADFF; --accent-soft:#16263E;
+  --ok:#5CCB90; --ok-soft:#12291F;
+  --partial:#E6B44A; --partial-soft:#2B2415;
+  --missing:#FF847B; --missing-soft:#2E1A19;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -14px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--f-display);margin:0;line-height:1.25;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+code{font-family:var(--f-mono);font-size:.86em;background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:.06em .36em}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+button{font:inherit}
+
+/* ── header ── */
+.top{position:sticky;top:0;z-index:60;background:color-mix(in srgb,var(--surface) 90%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1560px;margin:0 auto;padding:9px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:9px}
+.brand b{font-family:var(--f-display);font-size:16px;font-weight:600}
+.brand span{font-family:var(--f-mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
+.flows{display:flex;gap:3px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:3px;flex-wrap:wrap}
+.fbtn{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;background:none;border:0;color:var(--ink-2);padding:6px 12px;border-radius:6px;cursor:pointer}
+.fbtn[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.spacer{margin-left:auto}
+.ctl{display:flex;align-items:center;gap:6px}
+.nav-btn{background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);height:32px;min-width:32px;padding:0 10px;border-radius:8px;cursor:pointer;font-size:13px}
+.nav-btn:hover:not(:disabled){color:var(--ink);border-color:var(--line-2)}
+.nav-btn:disabled{opacity:.38;cursor:not-allowed}
+.nav-btn.play[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.count{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums;min-width:52px;text-align:center}
+.home{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:7px 11px}
+.home:hover{color:var(--ink);border-color:var(--line-2)}
+
+/* ── step rail ── */
+.rail{max-width:1560px;margin:0 auto;padding:9px 20px 0;display:flex;gap:3px;align-items:center;flex-wrap:wrap}
+.dot{height:5px;flex:1;min-width:5px;border-radius:3px;background:var(--surface-3);border:0;padding:0;cursor:pointer}
+.dot.past{background:color-mix(in srgb,var(--accent) 42%,transparent)}
+.dot.now{background:var(--accent);height:8px}
+.dot.gap{background:color-mix(in srgb,var(--missing) 55%,transparent)}
+.dot.gap.now{background:var(--missing)}
+
+/* ── layout ── */
+.wrap{max-width:1560px;margin:0 auto;padding:14px 20px 60px;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:18px;align-items:start}
+@media (max-width:1120px){.wrap{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.col.right{position:sticky;top:104px}
+@media (max-width:1120px){.col.right{position:static}}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.card-h{font-family:var(--f-mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);padding:9px 15px;border-bottom:1px solid var(--line);background:var(--surface-2);display:flex;align-items:center;gap:9px}
+.card-h .r{margin-left:auto;text-transform:none;letter-spacing:0;font-size:11px}
+
+/* ── diagram ── */
+.dia{max-height:min(56vh,600px);overflow:auto;padding:0}
+.seq{position:relative;padding:12px 14px 20px;min-width:520px}
+.actors{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:5px;position:sticky;top:0;z-index:5;background:var(--surface);padding-bottom:9px}
+.actor{background:var(--surface-2);border:1px solid var(--line-2);border-radius:7px;padding:6px 4px;text-align:center;font-family:var(--f-mono);font-size:10.5px;color:var(--ink);line-height:1.3;transition:background .2s,border-color .2s,color .2s}
+.actor.hot{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.lifelines{position:absolute;left:14px;right:14px;top:52px;bottom:20px;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));z-index:0;pointer-events:none}
+.lifelines i{justify-self:center;width:0;height:100%;border-left:1px dashed var(--line-2)}
+.row{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));position:relative;z-index:2;border-radius:7px;transition:opacity .25s,background .25s;cursor:pointer;border:1px solid transparent}
+.row.future{opacity:.22}
+.row.now{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+.row.now.isgap{background:var(--missing-soft);border-color:color-mix(in srgb,var(--missing) 35%,transparent)}
+.msg{grid-column:var(--a)/calc(var(--b) + 1);padding:8px 4px 4px;display:flex;flex-direction:column}
+.msg em{font-style:normal;font-size:11.5px;color:var(--ink-2);text-align:center;line-height:1.35;margin-bottom:3px;padding:0 4px}
+.row.now .msg em{color:var(--ink);font-weight:500}
+.arrow{display:flex;align-items:center;height:9px}
+.arrow s{flex:1;height:0;border-top:1.5px solid var(--ink-3);text-decoration:none}
+.row.now .arrow s{border-top-color:var(--accent)}
+.row.now.isgap .arrow s{border-top-color:var(--missing)}
+.arrow.dash s{border-top-style:dashed}
+.arrow b{width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent}
+.arrow.r b{border-left:7px solid var(--ink-3);margin-left:-1px}
+.arrow.l b{border-right:7px solid var(--ink-3);margin-right:-1px;order:-1}
+.row.now .arrow.r b{border-left-color:var(--accent)}
+.row.now .arrow.l b{border-right-color:var(--accent)}
+.row.now.isgap .arrow.r b{border-left-color:var(--missing)}
+.row.now.isgap .arrow.l b{border-right-color:var(--missing)}
+.msg.self em{text-align:left;padding-left:15px;position:relative}
+.msg.self em::before{content:"\21BB";position:absolute;left:0;color:var(--accent);font-size:12px}
+.msg.note{grid-column:1/-1}
+.msg.note em{font-family:var(--f-mono);font-size:10.5px;color:var(--ink-3);letter-spacing:.04em}
+.stepno{position:absolute;left:-2px;font-family:var(--f-mono);font-size:9px;color:var(--ink-3);padding-top:10px}
+
+/* ── state inspector ── */
+.stores{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:8px;padding:12px 14px}
+.store{border:1px solid var(--line);border-radius:9px;padding:9px 11px;background:var(--surface-2);min-height:76px}
+.store h6{font-family:var(--f-mono);font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);margin:0 0 6px;font-weight:500}
+.store ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}
+.store li{font-family:var(--f-mono);font-size:10.5px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:2px 7px;line-height:1.45}
+.store li.new{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.store li.gone{border-color:color-mix(in srgb,var(--missing) 40%,transparent);background:var(--missing-soft);color:var(--missing);text-decoration:line-through}
+.store .empty{font-size:10.5px;color:var(--ink-3);font-style:italic}
+.feed{padding:11px 14px;display:flex;flex-direction:column;gap:5px;max-height:150px;overflow:auto}
+.feed div{font-family:var(--f-mono);font-size:10.5px;color:var(--ink-2);border-left:2px solid var(--line-2);padding-left:9px}
+.feed div.new{border-left-color:var(--accent);color:var(--accent)}
+.feed .empty{border:0;padding:0;color:var(--ink-3);font-style:italic}
+
+/* ── explainer panel ── */
+.panel{padding:0}
+.p-top{padding:17px 19px 15px;border-bottom:1px solid var(--line)}
+.tagrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+.tag{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;padding:3px 8px;border-radius:5px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-3)}
+.tag.concept{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 32%,transparent);color:var(--accent);font-weight:500}
+.tag.rfc{border-color:color-mix(in srgb,var(--accent) 25%,transparent);color:var(--accent)}
+.tag.ok{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 32%,transparent);color:var(--ok)}
+.tag.partial{background:var(--partial-soft);border-color:color-mix(in srgb,var(--partial) 32%,transparent);color:var(--partial)}
+.tag.missing{background:var(--missing-soft);border-color:color-mix(in srgb,var(--missing) 32%,transparent);color:var(--missing)}
+.p-top h2{font-size:19px;margin-bottom:7px}
+.p-top p{color:var(--ink-2);font-size:14.5px}
+.blocks{padding:6px 19px 19px;display:flex;flex-direction:column}
+.blk{padding:14px 0;border-bottom:1px dashed var(--line)}
+.blk:last-child{border-bottom:0}
+.blk h5{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;margin:0 0 6px;font-weight:500;display:flex;align-items:center;gap:7px}
+.blk p{font-size:14px;color:var(--ink-2)}
+.blk strong{color:var(--ink);font-weight:600}
+.blk.why h5{color:var(--accent)}
+.blk.how h5{color:var(--ok)}
+.blk.edge h5{color:var(--partial)}
+.blk.gap{background:var(--missing-soft);border:1px solid color-mix(in srgb,var(--missing) 28%,transparent);border-radius:9px;padding:13px 15px;margin:14px 0}
+.blk.gap h5{color:var(--missing)}
+.blk.gap p{color:var(--ink-2)}
+.blk.code h5{color:var(--ink-3)}
+.blk.code p{font-family:var(--f-mono);font-size:12px;color:var(--ink-2);word-break:break-word}
+.blk.rm{background:var(--surface-2);border-radius:9px;padding:13px 15px;margin-top:14px}
+.blk.rm h5{color:var(--ink-3)}
+.nogap{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:11px;color:var(--ok);padding:12px 0 0}
+.hint{font-family:var(--f-mono);font-size:10px;color:var(--ink-3);letter-spacing:.06em;text-align:center;padding:11px 0 0}
+kbd{font-family:var(--f-mono);font-size:10px;background:var(--surface-2);border:1px solid var(--line-2);border-bottom-width:2px;border-radius:4px;padding:1px 5px;color:var(--ink-2)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><b>Trace Walker</b><span id="flowsub">Login</span></div>
+    <div class="flows" id="flows" role="group" aria-label="Choose a flow"></div>
+    <div class="spacer"></div>
+    <div class="ctl">
+      <button class="nav-btn" id="prev" aria-label="Previous step">&#8592;</button>
+      <span class="count" id="count">1 / 1</span>
+      <button class="nav-btn" id="next" aria-label="Next step">&#8594;</button>
+      <button class="nav-btn play" id="play" aria-pressed="false" aria-label="Autoplay">&#9654;</button>
+      <button class="nav-btn" id="theme" aria-label="Toggle theme">&#9686;</button>
+      <a class="home" href="index.html">Deck</a>
+    </div>
+  </div>
+  <div class="rail" id="rail"></div>
+</header>
+
+<div class="wrap">
+  <div class="col">
+    <div class="card">
+      <div class="card-h">Trace<span class="r" id="diahead"></span></div>
+      <div class="dia" id="dia"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">State at this moment<span class="r" id="statehead">what exists, and where</span></div>
+      <div class="stores" id="stores"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">EventBus<span class="r">published so far</span></div>
+      <div class="feed" id="feed"></div>
+    </div>
+  </div>
+
+  <div class="col right">
+    <div class="card panel">
+      <div class="p-top">
+        <div class="tagrow" id="tags"></div>
+        <h2 id="title"></h2>
+        <p id="what"></p>
+      </div>
+      <div class="blocks" id="blocks"></div>
+    </div>
+    <p class="hint"><kbd>&#8592;</kbd> <kbd>&#8594;</kbd> step &nbsp;·&nbsp; <kbd>space</kbd> play/pause &nbsp;·&nbsp; click any row to jump</p>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ══════════════════════════ DATA ══════════════════════════
+   a,b = actor columns (1-based). dir: r | l | self | note
+   s  = evidence: ok | partial | missing
+   set: [store, item] adds · ["-",store] clears store · ["-x",store,item] removes item
+════════════════════════════════════════════════════════════ */
+
+var FLOWS = {
+
+login: {
+  name:"Login", sub:"UC.3-1.1.1",
+  actors:["Customer","Atlas UI","CIAM MFE","Sentinel","Directory","EventBus","Atlas BFF"],
+  steps:[
+  {a:1,b:2,dir:"r",t:"Enter card number / User ID + password",
+   c:"Public client", title:"The fact that shapes everything downstream",
+   what:"The customer types a credential into a browser SPA.",
+   why:"Atlas UI is a <strong>public client</strong>: JavaScript shipped to a device you don't control. It cannot keep a secret — no client secret, no private config, nothing. Every other control in this trace exists to compensate for that single fact.",
+   how:"Naming it correctly is what tells you which OAuth rules apply. Public client means PKCE is mandatory, implicit grant is forbidden, and tokens need sender-constraining because a stolen bearer token has no second factor protecting it.",
+   edge:"Being a public client is not a vulnerability — it's a constraint. The vulnerability is pretending otherwise, e.g. shipping a &quot;secret&quot; in the bundle.",
+   rm:"Nothing to remove yet — but if you treated this as a confidential client and relied on a client secret, that secret would be readable in DevTools by every customer.",
+   rfc:"RFC 6749 §2.1"},
+
+  {a:2,b:3,dir:"r",t:"Hand off to the federated authenticator",
+   c:"Trust boundary", title:"The credential screen isn't Atlas's code",
+   what:"Atlas UI hands control to the AuthKit MFE micro-frontend, which owns the actual password / biometric / OTP screens.",
+   why:"One team owns credential capture across every Northwind channel, so the login UX and its security controls are built and patched once rather than per-app.",
+   how:"Centralising credential capture means a fix lands everywhere at once, and there's a single place to audit for keylogging, autofill and clipboard behaviour.",
+   edge:"Federation at runtime means the MFE executes <strong>in Atlas's origin, with Atlas's DOM access</strong>. It is not sandboxed from the page that hosts it.",
+   gap:"The MFE is module-federated into Atlas UI at runtime, so a compromise of the <em>MFE build pipeline</em> is a compromise of the login screen for every customer. The architecture doc describes no SRI, version pinning, build provenance or origin isolation for it. Worth threat-modelling as a supply-chain path — it is the single highest-leverage target in this whole trace.",
+   rm:"Remove the boundary discipline and the login screen inherits the blast radius of every dependency in the host app.",
+   s:"missing"},
+
+  {a:2,b:2,dir:"self",t:"Generate code_verifier, derive code_challenge = SHA-256(verifier)",
+   c:"PKCE", title:"Commit to a secret you haven't revealed yet",
+   what:"Before starting the flow, the browser invents a high-entropy random string (96-char base64url) and hashes it.",
+   why:"A public client can't prove its identity with a secret. PKCE substitutes a <strong>per-transaction</strong> secret: commit to the hash now, reveal the original later. Only the party that generated the verifier can complete the exchange.",
+   how:"Defeats <strong>authorization-code interception</strong> — malicious redirect, a rogue app claiming the same custom URL scheme on mobile, or a code leaked in a Referer header or proxy log. The attacker ends up with a code they cannot redeem.",
+   edge:"PKCE protects <em>the code exchange only</em>. It does nothing for the integrity of the <code>/authorize</code> request parameters — which is why the unsigned request object two steps from now is still a real finding.",
+   rm:"Remove it and a stolen authorization code becomes directly redeemable for tokens.",
+   code:"auth.service.ts#L892-L910 &mdash; generateCodeVerifier() + generateCodeChallenge()", s:"ok",
+   rfc:"RFC 7636",
+   set:[["session","code_verifier"]]},
+
+  {a:3,b:3,dir:"self",t:"Encrypt credential client-side (RSA key import + AES)",
+   c:"Defence in depth", title:"An envelope inside the TLS tunnel",
+   what:"The MFE imports an RSA public key, generates an AES key, and encrypts the credential payload before it ever hits the network.",
+   why:"TLS protects the credential <em>in transit between endpoints</em>. It does not protect it at the endpoints — and in a bank there are several: TLS-terminating load balancers, WAFs, API gateways, and everything that logs a request body.",
+   how:"Narrows who can see a plaintext password to the holder of the RSA private key. A gateway that accidentally logs request bodies now logs ciphertext.",
+   edge:"<strong>Be honest about the limit:</strong> this does not protect against a compromised page. Anything running in the origin — an XSS payload, a malicious dependency, the compromised MFE from step 2 — reads the credential <em>before</em> encryption. It is a middlebox and logging control, not an anti-XSS control.",
+   rm:"Remove it and the credential is visible to every TLS-terminating hop and any component that logs bodies.",
+   code:"payload-encryption.service.ts#L86-L115", s:"ok"},
+
+  {a:3,b:4,dir:"r",t:"POST /auth  (encrypted credential)",
+   c:"IdP boundary", title:"The first call that crosses into the vault",
+   what:"The MFE sends the encrypted credential to Sentinel's <code>/auth</code> endpoint.",
+   why:"This is the architectural rule from §1 in physical form: <strong>no security decision happens outside Sentinel</strong>. The SPA never evaluates a password, never decides whether a login succeeded, never mints anything.",
+   how:"Concentrating the decision in one component means one place to enforce lockout, one place to instrument for fraud, one audit trail. A distributed auth decision is a distributed set of bypasses.",
+   edge:"The gateway path matters here too: anything that can terminate and inspect this call sits inside the trust boundary whether you meant it to or not.",
+   rm:"Distribute the auth decision across channels and you get channel-specific bypasses — the classic 'mobile API skipped the lockout check' incident.",
+   set:[["net","POST /auth"]]},
+
+  {a:4,b:5,dir:"r",t:"Validate password against the credential store",
+   c:"Credential store", title:"Directory separation",
+   what:"Sentinel calls CredentialAuthentication, which validates the password against Directory, the LDAP-style directory.",
+   why:"Credentials live in a purpose-built directory rather than an application database — separate access controls, separate audit, separate blast radius from a business-data breach.",
+   how:"An application-database compromise doesn't hand over password hashes, and the directory can enforce its own lockout and password policy independently of app code.",
+   edge:"The hashing algorithm, work factor and pepper strategy inside Directory are <strong>not visible from any repo we have</strong>. 'It's in the directory' is not the same as 'it's stored correctly.'",
+   gap:"Password storage strength in Directory is unverifiable from these repos. Don't assert it either way — that's a NEEDS-EVIDENCE item with a named artifact: the Directory password policy and hash configuration.",
+   rm:"Put credentials in the app database and one SQL injection becomes a full credential-set disclosure.",
+   s:"missing"},
+
+  {a:4,b:5,dir:"l",t:"Valid",dash:1,
+   c:"Lockout", title:"The counters that ride along",
+   what:"Directory confirms the password. Alongside this, R3 carries forward legacy protections unchanged.",
+   why:"<strong>Password Lock</strong> (soft) and <strong>OTP Lock</strong> (hard) after repeated failures are what convert 'attacker guesses passwords' from an unlimited operation into a rate-limited one.",
+   how:"Online guessing is defeated by rate limiting and lockout — not by password complexity. Complexity is a defence against <em>offline</em> cracking, which is a different threat with a different control.",
+   edge:"Lockout is also a denial-of-service surface: an attacker who knows your card number can lock you out. Banks accept that trade deliberately.",
+   rm:"Remove lockout and credential stuffing against a known card-number space becomes trivially cheap."},
+
+  {a:4,b:4,dir:"self",t:"[if User ID login] resolve card number + CIF",
+   c:"Identifier indirection", title:"Why User ID exists at all",
+   what:"If the customer logged in with a User ID rather than a card number, Sentinel calls Credential Management Service to resolve the associated card number and transaction CIF, tagged <code>x_proxy_cardnumber</code> and <code>x_transaction_cifID</code>.",
+   why:"Card numbers are <strong>enumerable and guessable</strong> — they have structure, checksums and issuer ranges. Using one as a login identifier hands attackers a valid-username oracle for free.",
+   how:"A User ID decouples the public login identifier from the sensitive account number. This is the same reasoning behind pairwise/sectoral <code>sub</code> identifiers in OIDC: never let the identifier you expose be the identifier that means something.",
+   edge:"Both identifiers still coexist during migration, so the enumerable path remains live until conversion (§9) completes across the base.",
+   rm:"Keep card-number-only login and you retain a permanently enumerable identifier space — which is exactly why the prudential regulator required the change.",
+   rfc:"See §9 — User ID Conversion"},
+
+  {a:4,b:6,dir:"r",t:"Publish password-validation event",
+   c:"Pre-auth trust", title:"The most interesting design decision in the flow",
+   what:"The moment the password validates, Sentinel publishes an event to EventBus. <code>profile-service</code> consumes it and starts prefetching the customer's profile into the GridCache — in parallel with the rest of authentication.",
+   why:"Latency. Password validation is the <strong>earliest point where the login will probably succeed</strong>, so it's the earliest point you can start warming data without wasting work on failures.",
+   how:"By the time full authentication finishes, the account summary is already in cache — the customer sees data immediately instead of watching a spinner.",
+   edge:"<strong>Read this carefully:</strong> the prefetch fires <em>before</em> the OAuth exchange, before fraud scoring, and before any step-up. Work is being done on behalf of a user who is not yet fully authenticated.",
+   gap:"Three choices keep this safe: it caches profile data only, credit-card logins are excluded, and BFF only <em>reads</em> the cache after full login completes. None of those three is enforced by a type system or a gateway policy — they're conventions in service code. <strong>Widen what gets prefetched, or read the cache earlier, and a performance optimization silently becomes an authorization bypass.</strong> Raising that is exactly the architect's job.",
+   rm:"Remove the eligibility filter or the read-ordering rule and you have pre-authentication data disclosure.",
+   evt:"login-optimization (+ applicationInfo.userLang)",
+   set:[["grid","customer profile (prefetch)"]],
+   s:"partial"},
+
+  {a:3,b:4,dir:"l",t:"Authorization code + callback URL",dash:1,
+   c:"Authorization code", title:"The claim ticket, not the key card",
+   what:"Sentinel returns a short-lived, single-use authorization code — not tokens.",
+   why:"The code travels the <strong>front channel</strong> (browser redirects, URLs), which is inherently leaky: browser history, Referer headers, proxy logs, shoulder-surfing. Tokens must never travel that path.",
+   how:"Splitting into two legs means the leaky channel only ever carries something that is <strong>useless on its own</strong> — single-use, short-lived, and (thanks to PKCE) unredeemable without the verifier. The tokens themselves come back over a direct back-channel POST.",
+   edge:"This is precisely why the implicit grant died: it returned tokens in a URL fragment, putting the actual credential on the leaky path.",
+   rm:"Return tokens here instead of a code and you have reinvented the implicit grant, with tokens in browser history.",
+   rfc:"RFC 6749 §4.1 · RFC 9700",
+   set:[["net","authorization code (front channel)"]]},
+
+  {a:3,b:4,dir:"r",t:"/authorize  (code + PKCE code_verifier)",
+   c:"PKCE redemption", title:"Reveal the secret — and the finding hiding here",
+   what:"The SPA redeems the code, now presenting the original <code>code_verifier</code>. Sentinel re-hashes it and compares against the stored challenge.",
+   why:"This closes the PKCE loop: possession of the verifier proves this is the same client that started the flow.",
+   how:"An attacker holding only an intercepted code fails here — they never saw the verifier. The trade returns <code>invalid_grant</code>.",
+   edge:"The verifier must be sent once, over the back channel, and never logged. Logging it anywhere — Splunk, EventBus, an APM trace — destroys the entire control.",
+   gap:"The <code>/authorize</code> request object is minted as an <strong><code>alg:none</code> unsigned JWT</strong> (<code>generateUnsignedJwt</code>), and Sentinel is <em>configured to accept it</em>: <code>request_object_signing_alg: none</code> for <code>spapublicclient</code> and <code>spamobileclient</code>. So request parameters — <code>redirect_uri</code>, <code>scope</code> — carry no integrity protection and can be tampered with. PKCE does not cover this; it is a separate control (JAR, RFC 9101). The newer <code>idp_v2</code> template already uses <strong>RS256</strong>, so the fix exists and simply hasn't been rolled to these clients. <strong>The deliverable here is a migration plan, not a finding.</strong>",
+   rm:"Remove the verifier check and PKCE is decorative.",
+   code:"auth.utils.service.ts#L21-L24 &middot; clients.j2#L25 (accepts none) &middot; idp_v2 template uses RS256", s:"missing",
+   rfc:"RFC 7636 · RFC 9101 (JAR) · RFC 9126 (PAR)"},
+
+  {a:3,b:4,dir:"l",t:"Access token + Refresh token",dash:1,
+   c:"Token types", title:"Two tokens, two jobs, two lifetimes",
+   what:"Sentinel issues an access token and a refresh token (an ID token is also returned and parsed at login).",
+   why:"Splitting them lets the credential you use constantly be <strong>short-lived</strong>, while the credential that survives is used <strong>rarely and only against one endpoint</strong>. Compromise windows shrink for the token that travels most.",
+   how:"A stolen access token expires in minutes. A stolen refresh token is more valuable but is only ever sent to <code>/token</code>, so it has far less exposure surface — and rotation with reuse detection can invalidate a whole family when theft is detected.",
+   edge:"<strong>Audience is the whole point.</strong> The ID token's audience is the client and it means 'who logged in'; the access token's audience is the resource server and it means 'what may be called'. Using one where the other belongs is a classic architecture smell.",
+   rm:"Collapse them into one long-lived token and every API call carries a credential worth stealing for weeks.",
+   rfc:"RFC 6749 · OIDC Core §2"},
+
+  {a:2,b:3,dir:"l",t:"Tokens returned to the host app",dash:1,
+   c:"Storage", title:"Where each token lands, and why",
+   what:"The access token is held in <strong>application memory only</strong>. The refresh token goes to <strong>sessionStorage</strong>. Neither goes to localStorage.",
+   why:"Each storage location answers three questions differently: who can read it, does it survive a reload, and is it sent automatically. Those answers decide which attack you're exposed to.",
+   how:"Memory-only means the access token is <strong>not recoverable after a page reload</strong> and never sits in a store an attacker can enumerate later. localStorage would persist it indefinitely for any injected script to harvest.",
+   edge:"<strong>State this precisely or you'll be wrong in an interview:</strong> memory-only does <em>not</em> stop an active XSS — a payload running in the page reads the variable just fine. What it stops is <strong>persistence and later exfiltration</strong>. It is a mitigation that shrinks the window, not a fix. The actual anti-XSS control is CSP.",
+   rm:"Move the access token to localStorage and any injected script harvests a still-valid token on any future page load.",
+   code:"hybrid-token-storage.service.ts#L13-L58 &mdash; _accessToken field + tokens getter/setter", s:"ok",
+   set:[["-x","net","POST /auth"],["-x","net","authorization code (front channel)"],["mem","access token"],["session","refresh token"],["-x","session","code_verifier"]]},
+
+  {a:2,b:2,dir:"self",t:"Generate DPoP key pair — private key into the OS keystore",
+   c:"DPoP", title:"Turning a bearer token into a bound one",
+   what:"The browser generates a public/private key pair. From here, every call carries a freshly signed proof.",
+   why:"A plain access token is a <strong>bearer</strong> token — whoever holds it can spend it, like cash. Leak it via XSS, a log, or a middlebox and an attacker replays it from anywhere until expiry. DPoP staples the token to a key: a boarding pass that only your passport validates.",
+   how:"The token alone becomes useless. An attacker who exfiltrates the access token but not the private key cannot produce a valid proof, so every call they make is rejected. This is the single biggest reduction in token-theft blast radius in the whole architecture.",
+   edge:"Key <em>storage</em> stops theft, not <em>use</em>. An XSS payload still running in the page can ask the signing API to sign proofs for it — a <strong>signing oracle</strong>. DPoP shrinks a stolen token from 'replayable anywhere, for its full lifetime' to 'usable only while the attacker is executing inside your page'. That's an enormous win, but it is not immunity.",
+   rm:"Remove DPoP and any leaked access token is replayable from any machine on earth until it expires.",
+   code:"auth.service.ts#L73-L77, #L815-L850 &mdash; native plugin: createDpopKey / signDpop / deleteDpopKey", s:"ok",
+   rfc:"RFC 9449",
+   note:"The code is stronger than the source doc: the doc says IndexedDB, but signing is delegated to a native plugin, so key material sits in the <strong>OS keystore and never enters JavaScript</strong>. A lifecycle lock (#L1178-L1200) stops concurrent calls minting duplicate key namespaces.",
+   set:[["key","DPoP private key (non-exportable)"],["mem","DPoP public key"]]},
+
+  {a:4,b:6,dir:"r",t:"Publish SignIn success / failure / attempt (+ RiskEngine fraud results)",
+   c:"Telemetry", title:"Audit is architecture, not plumbing",
+   what:"Sentinel publishes sign-in outcomes, including fraud assessments from RSA / DeviceTrust / BehaviorIQ, to the Atlas SignIn topic. Splunk, IdP Datamart and Warehouse consume it.",
+   why:"Detection is a control in its own right. Preventive controls fail silently; the event stream is how you find out. It's also what feeds the fraud models that score the <em>next</em> login.",
+   how:"Failed-attempt patterns across accounts reveal credential stuffing that no single session would show. Losing these events doesn't break login — it blinds the bank.",
+   edge:"What must <strong>never</strong> appear on this bus: the <code>code_verifier</code>, any token, raw PAN, biometric material. An event bus is a fan-out to many consumers with many retention policies.",
+   rm:"Drop the event stream and lockout counting and fraud modelling both degrade — quietly.",
+   code:"PublishProducerEventService.java#L36-L46 &middot; CommonConstants.java#L71-L87", s:"ok",
+   evt:"AuthEvents SignIn success (+ RiskEngine verdict)"},
+
+  {a:2,b:7,dir:"r",t:"/initAppSession  (DPoP-signed, routed through Gateway)",
+   c:"Two sessions", title:"The split that causes half of all bad findings",
+   what:"Only now does the app session begin. Atlas UI asks BFF to start it; BFF stores an <code>IDP_Correlation_ID</code> linking back to the Sentinel security session.",
+   why:"The <strong>security session</strong> (Sentinel: tokens, grants, token cache) and the <strong>application session</strong> (BFF: account summary, business state) have genuinely different lifetimes, owners and failure modes. Conflating them produces both bad architecture and bad findings.",
+   how:"Keeping them separate means business state can be cached, rebuilt and scaled without touching anything security-critical — and the correlation ID still ties them for audit.",
+   edge:"They are linked by a stored ID, <strong>not</strong> by a shared lifecycle. Ending one does not end the other. That is exactly why logout has to be three-sided later in §6.3.",
+   gap:"<code>/initAppSession</code> and the whole Atlas BFF backend are <strong>not in the repos we have</strong>. Session-fixation handling, correlation-ID validation and whether BFF independently verifies the token are all unverifiable here. NEEDS-EVIDENCE — name the artifact: the Atlas BFF session-init implementation.",
+   rm:"Merge the two sessions and you can't independently revoke security state without destroying business state — or worse, vice versa.",
+   s:"missing",
+   set:[["bos","app session + IDP_Correlation_ID"]]},
+
+  {a:5,b:7,dir:"l",t:"Retrieve credential record · check GridCache",
+   c:"Cache read", title:"Where the prefetch pays off",
+   what:"BFF retrieves the credential record from Directory and checks the GridCache for the profile prefetched back at step 9.",
+   why:"Cache hit means near-instant account summary. Cache miss means a live downstream fetch — correct either way, just slower.",
+   how:"The optimization is invisible when it fails, which is the mark of a well-designed cache: never a correctness dependency.",
+   edge:"This read happens <em>after</em> full authentication — that ordering is the third of the three safety properties from step 9. It is the one most likely to be broken by a well-meaning refactor.",
+   rm:"Read the cache before authentication completes and step 9's optimization becomes a data-disclosure bug."},
+
+  {a:2,b:7,dir:"l",t:"Account summary",dash:1,
+   c:"Done", title:"Authenticated, with a bound token",
+   what:"The customer sees their accounts. BFF writes <code>LoginSuccess</code> to EventBus.",
+   why:"Worth pausing on what now exists and where — the state panel on the left is the thing to memorise.",
+   how:"Access token in memory (minutes, refreshed at &minus;15s). Refresh token in sessionStorage. DPoP private key in the OS keystore, never exported. App session in BFF, tied by correlation ID. Security session in Sentinel's token cache.",
+   edge:"Five stores, five different lifetimes, five different cleanup obligations at logout. <strong>Every one of them has to be cleared — and §6.4 says clear them even when the server calls fail.</strong>",
+   rm:"Forget any one of these five at logout and you have a token or key that outlives the session.",
+   evt:"AuthEvents.App.LoginSuccess",
+   set:[["idp","security session + token cache entry"]]}
+  ]
+},
+
+api: {
+  name:"API call + refresh", sub:"§2.3 / §6.1",
+  actors:["Atlas UI","Sentinel","Gateway"],
+  steps:[
+  {a:1,b:1,dir:"self",t:"Is the access token expired, or under 15s from expiry?",
+   c:"Proactive refresh", title:"Refresh before you need to, not when you fail",
+   what:"Before <em>every</em> API call the UI checks the access token against a 15-second buffer.",
+   why:"Reactive refresh — call, get 401, refresh, retry — has a race: a token can expire <em>between</em> the check and the server's validation, and non-idempotent calls can't safely be retried.",
+   how:"Refreshing pre-emptively removes the race entirely and hides token expiry from the user. The buffer must exceed worst-case network latency plus clock skew.",
+   edge:"This depends on <strong>client clock accuracy</strong>. A device with a badly skewed clock either refreshes constantly or not at all. Client-side time is never authoritative.",
+   rm:"Remove the buffer and you get intermittent, unreproducible 401s on slow connections — the classic 'works on my machine' session bug.",
+   code:"TOKEN_EXPIRATION_BUFFER_MS = 15000 (auth.constants.ts#L123) &rarr; isTokensValid (auth.service.ts#L345-L355)", s:"ok",
+   set:[["mem","access token (expiring)"]]},
+
+  {a:1,b:2,dir:"r",t:"[if needed] /token  (refresh token)",
+   c:"Refresh", title:"The only endpoint the refresh token ever sees",
+   what:"The UI exchanges the refresh token for a new access token and swaps it in place.",
+   why:"Confining the refresh token to a single endpoint minimises its exposure: it is never attached to business API calls, so it never crosses the gateway or reaches a resource server.",
+   how:"Blast radius scales with how many places a credential travels. One endpoint, one TLS path, one log surface.",
+   edge:"Refresh <strong>rotation with reuse detection</strong> is the important companion control — if a rotated token is presented twice, the whole family should be invalidated. Whether that's enabled here is not visible from the client repos.",
+   rm:"Skip rotation and a stolen refresh token grants indefinite silent access with no detection signal.",
+   rfc:"RFC 6749 §6 · RFC 9700",
+   set:[["mem","access token (fresh)"],["-x","mem","access token (expiring)"]]},
+
+  {a:1,b:1,dir:"self",t:"Build DPoP proof: htm, htu, iat, jti, ath — sign with the keystore key",
+   c:"DPoP proof", title:"Five claims, five distinct jobs",
+   what:"A small JWT is minted and signed for <strong>this one request</strong>.",
+   why:"Each claim closes a specific replay path. <code>htm</code> binds the HTTP method. <code>htu</code> binds the target URL, so a proof captured on a harmless GET can't be replayed onto a transfer POST. <code>iat</code> bounds it in time. <code>jti</code> makes it unique so a server can detect reuse. <code>ath</code> is a hash of the access token, pinning this proof to <em>that</em> token.",
+   how:"Together they mean a captured proof is worthless: wrong verb, wrong URL, wrong token, too old, or already seen.",
+   edge:"<code>ath</code> is the one people forget. Without it, a proof minted for one token can be paired with a different stolen token — the binding breaks even though a signature is present.",
+   rm:"Drop <code>htu</code> and any captured proof replays onto any endpoint. Drop <code>ath</code> and proofs and tokens stop being paired.",
+   code:"auth.service.ts#L1160-L1195 &mdash; built and signed per call", s:"ok",
+   rfc:"RFC 9449",
+   set:[["net","DPoP proof (single use)"]]},
+
+  {a:1,b:3,dir:"r",t:"Request + Authorization: Bearer <token> + DPoP: <proof>",
+   c:"Two headers", title:"Possession, presented alongside the token",
+   what:"Token and proof travel together on every call.",
+   why:"The token says <em>what you may do</em>; the proof says <em>you are the party this token was issued to</em>. Neither alone is sufficient.",
+   how:"This is what makes interception non-fatal. Capturing the traffic yields a token you can't use and a proof that expires in under a minute and only fits one request.",
+   edge:"Both are still visible to anything that terminates TLS. DPoP means what's captured is <strong>useless</strong>, not invisible."},
+
+  {a:3,b:3,dir:"self",t:"Verify signature with the bound public key",
+   c:"Verification", title:"Bound at issuance, or it proves nothing",
+   what:"Gateway verifies the proof against the public key associated with the access token.",
+   why:"The critical word is <strong>bound</strong>. The public key must have been tied to the token when the token was issued — that's the <code>cnf</code>/<code>jkt</code> thumbprint claim.",
+   how:"Without that binding, an attacker with a stolen token simply generates their <em>own</em> key pair, signs a perfectly valid proof, and sails through. The verification would pass and prove nothing at all.",
+   edge:"<strong>This is the subtlest failure mode in DPoP.</strong> A system can verify every proof correctly and still be trivially bypassable, if it verifies against the key <em>in the proof</em> rather than the key <em>bound to the token</em>.",
+   gap:"The <code>cnf</code>/<code>jkt</code> binding at issuance is not evidenced in the repos we have — token issuance is Sentinel-side config. Worth confirming explicitly: <em>which</em> key is the proof checked against? That question is the difference between real DPoP and expensive theatre.",
+   rm:"Verify against the proof's own key and DPoP becomes decorative.",
+   s:"missing", rfc:"RFC 9449 §6"},
+
+  {a:3,b:3,dir:"self",t:"Check iat within the 60-second window; htm/htu match the real request",
+   c:"Replay window", title:"A time bound is not a replay cache",
+   what:"Gateway checks the proof is fresh and that it describes this exact request. Sentinel does the same, independently, on its own paths.",
+   why:"A signature proves authorship, not freshness. Without a time bound, a captured proof is valid forever.",
+   how:"Sixty seconds caps the replay window. The doc's claim that Sentinel and Gateway enforce this <em>independently</em> is defence in depth — but independent implementations of the same rule are exactly the kind of thing that drifts apart over time.",
+   edge:"<strong>A time window alone does not stop replay — it time-boxes it.</strong> Stopping replay properly requires tracking <code>jti</code> uniqueness <em>within</em> the window. The alternative design is a server-issued <code>DPoP-Nonce</code>, which needs no clock sync but costs a round trip.",
+   gap:"Server-side enforcement lives in Sentinel / Gateway config that is <strong>not in these repos</strong>. So: the client sets <code>iat</code> ✅, but the window is unverified 🟡, and <strong>whether a <code>jti</code> replay cache exists at all is an open question nobody has answered</strong>. Treat every replay finding as NEEDS-EVIDENCE and go source the Gateway policy. Also check whether the two enforcement points have drifted.",
+   rm:"Remove the window and captured proofs replay indefinitely. Keep the window but skip <code>jti</code> tracking and they replay freely for 60 seconds.",
+   s:"partial", rfc:"RFC 9449 §11.1"},
+
+  {a:1,b:3,dir:"l",t:"200 OK  —  or 401 if stale / replayed",dash:1,
+   c:"Outcome", title:"What a rejection actually tells you",
+   what:"Valid proof, valid token, matching request: the call proceeds. Otherwise 401.",
+   why:"A 401 here is a meaningfully different signal from an expired-token 401 — it may indicate an actual replay attempt.",
+   how:"Distinguishing 'token expired' from 'proof rejected' in telemetry is what lets you detect attacks rather than just retry.",
+   edge:"If the UI treats every 401 as 'refresh and retry', a genuine replay rejection is invisible — and a token-alteration error may skip the §6.4 forced cleanup it was supposed to trigger.",
+   rm:"Collapse the error taxonomy and you lose the detection signal entirely.",
+   set:[["-x","net","DPoP proof (single use)"]]}
+  ]
+},
+
+hrt: {
+  name:"High-risk step-up", sub:"UC.3-1.4.x",
+  actors:["Atlas UI","Gateway","Sentinel","RiskEngine / RSA"],
+  steps:[
+  {a:1,b:2,dir:"r",t:"High-risk transaction request (DPoP-signed)",
+   c:"HRT", title:"About 25 transaction types get this treatment",
+   what:"Bill payment, delete EMT recipient, PIN reset, alert-delivery changes and roughly twenty more are classified high-risk.",
+   why:"Authentication answers 'who are you' <em>once, at login</em>. It cannot answer 'is this specific action, right now, consistent with this customer'. Session hijack, malware and social engineering all produce a perfectly valid session performing a fraudulent action.",
+   how:"Re-evaluating risk per action closes the gap between login-time assurance and action-time assurance.",
+   edge:"A fixed list is a maintenance liability: a new sensitive feature is <em>not</em> protected until someone remembers to add it. Absence from the list is a silent failure.",
+   rm:"Authenticate only at login and any hijacked session can move money at will."},
+
+  {a:2,b:2,dir:"self",t:"Validate DPoP proof · cache the PDP result",
+   c:"PDP cache", title:"A cache in front of an authorization decision",
+   what:"Gateway validates the proof, then caches the Policy Decision Point result to speed up repeated checks.",
+   why:"Policy evaluation is expensive; caching keeps latency acceptable at retail-banking volume.",
+   how:"Standard performance engineering — until you ask what the cache is holding.",
+   edge:"<strong>A cached authorization decision is a revocation-latency hole.</strong> Between revoking a grant at Sentinel and the cached PDP result expiring at Gateway, the gateway may still be honouring a decision that is no longer true.",
+   gap:"Gateway PDP caching lives in Gateway config not in these repos, so the TTL is unknown — and <strong>the TTL is exactly the size of your revocation gap</strong>. Get the number, then decide whether it's acceptable. This is a good, concrete, answerable question to take to the gateway team.",
+   rm:"Remove the cache and latency suffers; keep it without bounding the TTL and revocation becomes advisory.",
+   s:"missing"},
+
+  {a:2,b:2,dir:"self",t:"Park the payload in the Transaction Cache (60-min TTL, sub from TXSUB)",
+   c:"Dynamic linking", title:"This is PSD2, hand-rolled",
+   what:"The pending transaction payload is stored server-side, tagged with the <code>sub</code> taken from the token's TXSUB, while step-up is pending.",
+   why:"The customer is about to be asked for an OTP. The system must guarantee that the OTP authorises <strong>this exact transaction</strong> — not merely 'some transaction by someone who can receive an SMS'.",
+   how:"Parking the payload server-side means the client cannot alter amount or payee between approval and execution. That property — authentication cryptographically tied to a specific amount and payee — is <strong>dynamic linking</strong>, a PSD2 SCA requirement. Northwind implements it as a transaction property; the alternative standard approach makes it a token property via <code>acr</code>. Know both.",
+   edge:"The 60-minute TTL is deliberately matched to the maximum session lifetime, so a parked transaction can never outlive the session that created it.",
+   rm:"Let the client hold the payload and it can be modified after approval — approve $10, execute $10,000.",
+   gap:"The Transaction Cache lives in Gateway config not in these repos. Its existence is documented; its implementation is unverified.",
+   s:"missing", rfc:"RFC 9470 · PSD2 SCA",
+   set:[["gw","parked payload + sub (60-min TTL)"]]},
+
+  {a:3,b:4,dir:"r",t:"Assess risk (transaction id + custom facts)",
+   c:"Risk engine", title:"Step-up is conditional, not automatic",
+   what:"Sentinel calls RiskEngine, which orchestrates VendorScore, DeviceTrust and BehaviorIQ — device fingerprint, behavioural biometrics, velocity.",
+   why:"Challenging every transaction destroys usability and trains customers to approve reflexively. Challenging none is negligent. Risk scoring buys a middle path.",
+   how:"Signals invisible to the customer — device reputation, typing cadence, transaction velocity — decide who gets challenged.",
+   edge:"Risk scoring is probabilistic. It produces false positives that block legitimate customers and false negatives that let fraud through. It is a dial, not a gate.",
+   rm:"Remove it and you choose between challenging everyone or trusting everyone."},
+
+  {a:3,b:4,dir:"l",t:"[Review]  →  transaction fails outright, no retry",dash:1,
+   c:"Fail closed", title:"No soft decline, and that's deliberate",
+   what:"If RiskEngine returns <strong>Review</strong>, Sentinel fails the transaction. No retry, no soft-decline path.",
+   why:"A soft decline is an oracle: it tells an attacker their attempt scored badly and invites them to vary the approach until it doesn't.",
+   how:"Hard failure denies the feedback loop. It also means a blocked legitimate customer must use a different channel — a deliberate cost the bank accepts.",
+   edge:"<strong>Remember this when triaging tickets.</strong> 'Why was my legitimate transaction blocked with no explanation' is very often this rule working as designed, not a bug.",
+   rm:"Add a retry and you hand attackers an iterative oracle against the fraud model."},
+
+  {a:3,b:4,dir:"l",t:"[vendor analyze times out]  →  also fails (hard)",dash:1,
+   c:"Failure asymmetry", title:"The most nuanced rule in the architecture",
+   what:"If the risk <em>assessment</em> call fails or times out, the transaction fails. But if only the <em>notify</em> call or an EventBus publish fails, Sentinel <strong>logs and continues</strong>.",
+   why:"These are different classes of failure. Losing the assessment means proceeding <strong>blind</strong> on a high-risk action — unacceptable. Losing a downstream notification means telemetry is degraded while the security decision itself was still made correctly.",
+   how:"Fail closed where the failure removes a security decision; fail open where it only removes a side effect. That distinction is what separates a considered policy from a reflex.",
+   edge:"<strong>Do not 'fix' this into a blanket policy in either direction.</strong> A reviewer who sees the soft-fail path and files 'fail-open vulnerability' has misread the design — and a reviewer who hardens it will cause outages when a notification queue backs up.",
+   gap:"The counterpart risk is invisible degradation: if the notify path fails <em>permanently</em>, fraud analytics go dark while transactions continue to flow. <strong>The safety of this design depends entirely on monitoring the soft-fail path.</strong> Confirm that alerting exists — it is a NEEDS-EVIDENCE item worth more than most code findings.",
+   rm:"Make it uniformly fail-closed and a queue outage stops the bank. Uniformly fail-open and high-risk transactions execute unassessed.",
+   s:"partial"},
+
+  {a:1,b:3,dir:"l",t:"[Risk OK] Step-up required (OTP / biometric)",dash:1,
+   c:"Step-up", title:"A second factor, bound to one action",
+   what:"The customer is challenged with OTP or biometric.",
+   why:"This re-establishes assurance at the moment of the action rather than relying on assurance from login.",
+   how:"Even a fully hijacked session cannot complete the action without the second factor — which travels a different channel than the one under attacker control.",
+   edge:"OTP over SMS is the weakest form: SIM swap and interception are real. The NativeMFA biometric path is meaningfully stronger because it never transmits a factor at all.",
+   rm:"Remove step-up and risk scoring becomes advisory — it can flag but not stop."},
+
+  {a:3,b:3,dir:"self",t:"Compare token TXSUB sub against the parked transaction's sub",
+   c:"Anti-hijack", title:"The highest-severity control in the system",
+   what:"Before executing, Sentinel compares the <code>sub</code> in the presenting token's TXSUB against the <code>sub</code> stored with the parked transaction.",
+   why:"Everything so far proves <em>someone</em> completed a step-up. This proves it was the <strong>same someone who created the transaction</strong>. Without it the two halves are never tied together.",
+   how:"Defeats the confused-deputy attack: attacker parks a transaction, victim completes an unrelated step-up, attacker's payload executes on the victim's approval. On mismatch the response is deliberately brutal — invalidate the token, delete the cache entry, and <strong>invalidate every login grant for that user on web AND mobile</strong>. A mismatch is treated as evidence of an active attack, not a glitch.",
+   edge:"'Both web and mobile' is load-bearing. Invalidating only the channel where the mismatch appeared leaves the attacker holding a live session on the other one.",
+   gap:"<strong>This compare-and-invalidate block could not be located in the repos.</strong> Only TXSUB <em>save/map</em> was found (<code>NativeMFA_oauth_AccessPolicy.js#L66</code>, <code>Hub_pre_token_generation.js#L53</code>). A missing comparison — or one that only covers web — is precisely the high-severity finding §7 describes. <strong>This is open gap #1: trace <code>AccessPolicyFunctions.js</code> and the transaction-cache access policy before concluding either way.</strong>",
+   rm:"Remove it and step-up approvals stop being tied to the transactions they approved — transaction hijack.",
+   s:"missing"},
+
+  {a:1,b:2,dir:"l",t:"[sub matches] Approved — execute stored payload → success",dash:1,
+   c:"Execution", title:"The server's copy is the one that runs",
+   what:"The payload parked in step 3 executes — not anything the client re-sent.",
+   why:"This is what makes dynamic linking real rather than nominal.",
+   how:"The approved bytes and the executed bytes are the same bytes. There is no window in which the client can substitute different ones.",
+   edge:"Any design where the client re-submits the payload after approval reintroduces exactly the gap the transaction cache was built to close.",
+   rm:"Re-accept the payload from the client post-approval and dynamic linking is defeated.",
+   evt:"transaction approved + executed",
+   set:[["-x","gw","parked payload + sub (60-min TTL)"]]}
+  ]
+},
+
+logout: {
+  name:"Logout + cleanup", sub:"§6.3 / §6.4",
+  actors:["Customer","Atlas UI","Atlas BFF","Sentinel","EventBus"],
+  steps:[
+  {a:1,b:2,dir:"r",t:"Click Logout",
+   c:"Three sessions", title:"One click, three pieces of state",
+   what:"Logout must dismantle the BFF application session, the Sentinel security session, and everything held on the device.",
+   why:"They were created separately (steps 15–19 of the login trace), so they must be destroyed separately. There is no single call that ends all three.",
+   how:"Enumerating them explicitly is the only way to be sure none is missed — this is why §6.3 lists them rather than describing 'logout'.",
+   edge:"Three independent calls means <strong>partial failure is the normal case, not the edge case</strong>. Any of them can fail while the others succeed.",
+   rm:"Treat logout as one operation and partial failure silently leaves state behind."},
+
+  {a:2,b:3,dir:"r",t:"/logout  (routed through Gateway)",
+   c:"App session", title:"End the business session",
+   what:"Atlas UI tells BFF to end the application session.",
+   why:"Otherwise the account summary, cached balances and business context persist server-side, tied to a correlation ID that is about to be orphaned.",
+   how:"Explicit teardown means server memory and caches are released rather than waiting for a TTL.",
+   edge:"BFF ending its session does <strong>nothing</strong> to the tokens. The customer would still hold a fully valid access token.",
+   rm:"Skip it and orphaned app sessions accumulate, holding customer data past logout.",
+   set:[["-x","bos","app session + IDP_Correlation_ID"]]},
+
+  {a:2,b:3,dir:"l",t:"ack — or failure, doesn't matter",dash:1,
+   c:"Failure tolerance", title:"The phrase to internalise",
+   what:"The response is deliberately ignored.",
+   why:"The client cannot fix a server-side failure, and the customer has already asked to leave. Blocking or aborting on error would leave <em>more</em> state behind, not less.",
+   how:"Continuing regardless guarantees the remaining steps still run — especially the local clear, which is the only one fully under the client's control.",
+   edge:"'Doesn't matter' applies to <em>flow control</em>, not to observability. A logout call failing consistently is an incident; it just isn't a reason to stop logging out.",
+   rm:"Abort on the first failure and every subsequent cleanup step is skipped."},
+
+  {a:2,b:4,dir:"r",t:"unified_logout  (reason: user-initiated / timeout / forced)",
+   c:"Security session", title:"Why the reason travels with the call",
+   what:"Atlas UI ends the Sentinel session, passing one of exactly three reasons.",
+   why:"The reason is a <strong>security signal</strong>. Forced sign-outs and timeouts have very different meanings from a deliberate logout when you're looking at a fraud timeline or an audit trail.",
+   how:"It lands on the EventBus logout event and flows to the Datamart, Warehouse and Splunk — where a spike in forced sign-outs is a detectable pattern.",
+   edge:"Endpoint naming has drifted: some diagrams reference <code>session_logout</code> replacing <code>unified_logout</code>, and the repo uses the id <code>unified_logout_all_devices</code>. <strong>Check which name is current before concluding logout is broken.</strong>",
+   rm:"Drop the reason and you lose the ability to distinguish attack-driven sign-outs from ordinary ones.",
+   code:"auth.service.ts#L762-L774", s:"ok"},
+
+  {a:4,b:4,dir:"self",t:"Invalidate the access token in the token cache",
+   c:"Revocation", title:"Server-side invalidation, because expiry is too slow",
+   what:"Sentinel invalidates the token in its cache rather than waiting for it to expire.",
+   why:"A self-contained token stays cryptographically valid until <code>exp</code>. Without server-side invalidation, 'logout' would mean 'the token still works for several more minutes'.",
+   how:"The token cache is what makes revocation immediate — and it's why this architecture is a <em>hybrid</em>: DPoP-bound JWTs for speed, plus a cache for revocability.",
+   edge:"Recall the Gateway PDP cache from the step-up trace: <strong>invalidation at Sentinel does not instantly propagate to a gateway holding a cached decision.</strong> The revocation is only as fast as the slowest cache in the chain.",
+   rm:"Rely on expiry alone and logout becomes a suggestion for the length of the token lifetime.",
+   set:[["-x","idp","security session + token cache entry"]]},
+
+  {a:4,b:5,dir:"r",t:"Publish LogoutEvent.L0 (with reason)",
+   c:"Audit", title:"Logout is an auditable event",
+   what:"The logout, with its reason, is published to EventBus; IdP Datamart, Warehouse and Splunk consume it.",
+   why:"Session lifecycle is audit-relevant: regulators ask when sessions ended, and fraud investigations reconstruct timelines from exactly these events.",
+   how:"Reason codes make the stream analysable — you can distinguish a customer leaving from a wave of forced sign-outs.",
+   edge:"Duplicated or lost events distort those timelines. At-least-once delivery means consumers must tolerate duplicates.",
+   rm:"Drop the event and session-end becomes invisible to audit.",
+   evt:"AuthEvents.LogoutEvent.L0 (reason)"},
+
+  {a:2,b:2,dir:"self",t:"CLEAR LOCALLY — regardless of every outcome above",
+   c:"Unconditional cleanup", title:"The rule the whole section exists for",
+   what:"Access token, refresh token, DPoP key pair, cookies, permanent storage and PKCE codes — all cleared, whatever the server calls returned.",
+   why:"The device is the one place the client fully controls. If the server calls failed, the local state is <strong>more</strong> dangerous, not less: tokens are still live server-side <em>and</em> still present on the device.",
+   how:"Unconditional clearing guarantees the device retains nothing usable, decoupling device safety from network reliability. The doc is explicit that a token or DPoP key left after a <em>failed</em> logout is a real risk, not an edge case.",
+   edge:"This is a <code>finally</code>-block requirement in the truest sense — it must run on every path, including exceptions.",
+   gap:"<strong>This is open gap #2, and the only one you can settle today with the repos you already have.</strong> In code, the server call and the local cleanup are <em>decoupled</em>: <code>logout()</code> (#L762-L774) only calls <code>isamClient.logout()</code> and <strong>re-throws on error</strong>, with a <code>finally</code> that merely resets <code>logoutInProgress</code>. The cleanup lives separately in <code>cleanupTokensAndTimeouts()</code> (#L781-L812), orchestrated by <code>LogoutService</code>. <strong>If <code>LogoutService</code> calls it only on the success path, tokens and DPoP keys survive a failed logout — a direct contradiction of §6.3/§6.4.</strong> Go read <code>LogoutService</code> and settle it.",
+   rm:"Clear only on success and a failed logout leaves a live token and a usable signing key on the device.",
+   code:"cleanupTokensAndTimeouts() auth.service.ts#L781-L812 &middot; cleanupStoredDpopKeyAndState #L815-L850", s:"partial",
+   set:[["-","mem"],["-","session"],["-","key"]]},
+
+  {a:2,b:4,dir:"r",t:"/authorize — redisplay the login page",
+   c:"Post-logout", title:"Land the customer somewhere safe",
+   what:"The UI returns to a clean login page.",
+   why:"Leaving a logged-out user on a rendered account page invites confusion and shoulder-surfing, even with the data already stale.",
+   how:"A full re-authorize discards residual UI state along with the tokens.",
+   edge:"The visible page is not the security boundary — the cleared tokens are. This step is UX hygiene layered on top of an already-completed teardown.",
+   rm:"Skip it and account data stays on screen after logout — a support and privacy problem more than a token one."},
+
+  {a:2,b:2,dir:"self",t:"[Security-error variant] token-alteration → forced cleanup",
+   c:"Forced cleanup", title:"The ordering detail that's easy to get wrong",
+   what:"If Sentinel or Gateway report a tampered token or DPoP proof: remove DPoP keys → clear all tokens and session storage → show the session-expiry page. <strong>And if it was Gateway that raised it, call logout on Sentinel first.</strong>",
+   why:"A token-alteration error means something is actively wrong — tampering, a stale key, or an attack in progress. The response is to destroy all state immediately rather than attempt recovery.",
+   how:"The Gateway-specific ordering exists because Gateway detecting tampering does not imply Sentinel knows: the security session may still be live server-side. Clearing local state first would leave the client unable to authenticate the logout call it still needs to make.",
+   edge:"<strong>This asymmetry — extra step for Gateway errors, not for Sentinel errors — is a precise, testable requirement</strong> and a genuinely good target for a targeted unit test. It's the kind of detail an implementation quietly drops during a refactor.",
+   gap:"Verify the Gateway-error ordering explicitly in <code>LogoutService</code>. Alongside gap #2 it forms the complete §6.4 conformance check — and both are answerable from the repos you have.",
+   rm:"Clear local state before calling Sentinel on the Gateway path and the security session may survive with no way left to end it.",
+   s:"partial"}
+  ]
+}
+
+};
+
+var STORES = [
+  ["mem","Browser memory"],
+  ["session","sessionStorage"],
+  ["key","Device keystore"],
+  ["idp","Sentinel (server)"],
+  ["gw","Gateway cache"],
+  ["bos","Atlas BFF"],
+  ["grid","GridCache"],
+  ["net","In flight"]
+];
+
+/* ══════════════════════════ APP ══════════════════════════ */
+var flowKey="login", idx=0, timer=null;
+var $=function(id){return document.getElementById(id)};
+
+/* theme */
+var root=document.documentElement;
+try{var st=localStorage.getItem("ciam-theme"); if(st) root.setAttribute("data-theme",st);}catch(e){}
+$("theme").addEventListener("click",function(){
+  var cur=root.getAttribute("data-theme");
+  var next=cur==="dark"?"light":cur==="light"?"dark":
+    (window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"light":"dark");
+  root.setAttribute("data-theme",next);
+  try{localStorage.setItem("ciam-theme",next)}catch(e){}
+});
+
+/* flow buttons */
+Object.keys(FLOWS).forEach(function(k){
+  var b=document.createElement("button");
+  b.className="fbtn"; b.type="button"; b.dataset.k=k;
+  b.setAttribute("aria-pressed",String(k===flowKey));
+  b.textContent=FLOWS[k].name;
+  b.addEventListener("click",function(){ stop(); flowKey=k; idx=0; renderAll(); });
+  $("flows").appendChild(b);
+});
+
+function flow(){return FLOWS[flowKey]}
+function step(){return flow().steps[idx]}
+
+/* ── state replay ── */
+function computeState(upto){
+  var s={}, evts=[], changed={};
+  STORES.forEach(function(p){s[p[0]]=[]});
+  for(var i=0;i<=upto;i++){
+    var st=flow().steps[i];
+    if(st.evt) evts.push({t:st.evt,i:i});
+    if(!st.set) continue;
+    st.set.forEach(function(op){
+      if(op[0]==="-"){ if(i===upto&&s[op[1]].length) changed[op[1]]=s[op[1]].slice(); s[op[1]]=[]; }
+      else if(op[0]==="-x"){ var a=s[op[1]]; var j=a.indexOf(op[2]); if(j>-1){ if(i===upto)(changed[op[1]]=changed[op[1]]||[]).push(op[2]); a.splice(j,1);} }
+      else { if(s[op[0]].indexOf(op[1])<0) s[op[0]].push(op[1]); if(i===upto)(changed["+"+op[0]]=changed["+"+op[0]]||[]).push(op[1]); }
+    });
+  }
+  return {s:s,evts:evts,changed:changed};
+}
+
+/* ── renderers ── */
+function renderDiagram(){
+  var f=flow(), n=f.actors.length, s=step();
+  var hot={}; if(s.dir!=="note"){hot[s.a]=1;hot[s.b]=1;}
+  var h='<div class="seq" style="--n:'+n+'">';
+  h+='<div class="actors">'+f.actors.map(function(a,i){
+     return '<span class="actor'+(hot[i+1]?" hot":"")+'">'+a+'</span>';}).join("")+'</div>';
+  h+='<div class="lifelines">'+Array(n+1).join("<i></i>")+'</div>';
+  f.steps.forEach(function(st,i){
+    var cls="row"+(i===idx?" now":"")+(i>idx?" future":"")+(st.gap?" isgap":"");
+    var dir=st.dir, inner;
+    if(dir==="self"){
+      inner='<div class="msg self" style="--a:'+st.a+';--b:'+st.a+'"><em>'+st.t+'</em></div>';
+    }else if(dir==="note"){
+      inner='<div class="msg note"><em>'+st.t+'</em></div>';
+    }else{
+      var lo=Math.min(st.a,st.b), hi=Math.max(st.a,st.b);
+      inner='<div class="msg" style="--a:'+lo+';--b:'+hi+'"><em>'+st.t+'</em>'+
+        '<span class="arrow '+dir+(st.dash?" dash":"")+'"><s></s><b></b></span></div>';
+    }
+    h+='<div class="'+cls+'" data-i="'+i+'" role="button" tabindex="-1">'+inner+'</div>';
+  });
+  h+='</div>';
+  $("dia").innerHTML=h;
+  [].slice.call($("dia").querySelectorAll(".row")).forEach(function(r){
+    r.addEventListener("click",function(){ stop(); idx=+r.dataset.i; renderAll(); });
+  });
+  var cur=$("dia").querySelector(".row.now");
+  if(cur&&cur.scrollIntoView) cur.scrollIntoView({block:"center",behavior:"smooth"});
+}
+
+function renderState(){
+  var res=computeState(idx);
+  $("stores").innerHTML=STORES.map(function(p){
+    var key=p[0], items=res.s[key]||[];
+    var added=res.changed["+"+key]||[], removed=res.changed[key]||[];
+    var li=items.map(function(v){
+      return '<li'+(added.indexOf(v)>-1?' class="new"':'')+'>'+v+'</li>';}).join("");
+    li+=removed.map(function(v){return '<li class="gone">'+v+'</li>'}).join("");
+    if(!li) li='<span class="empty">empty</span>';
+    return '<div class="store"><h6>'+p[1]+'</h6><ul>'+li+'</ul></div>';
+  }).join("");
+  $("feed").innerHTML = res.evts.length
+    ? res.evts.map(function(e){return '<div'+(e.i===idx?' class="new"':'')+'>'+e.t+'</div>'}).join("")
+    : '<div class="empty">nothing published yet</div>';
+}
+
+function blk(cls,label,html){
+  return html?'<div class="blk '+cls+'"><h5>'+label+'</h5><p>'+html+'</p></div>':"";
+}
+
+function renderPanel(){
+  var s=step();
+  var tags='<span class="tag concept">'+(s.c||"Concept")+'</span>';
+  if(s.rfc) tags+='<span class="tag rfc">'+s.rfc+'</span>';
+  if(s.s==="ok") tags+='<span class="tag ok">verified in repo</span>';
+  if(s.s==="partial") tags+='<span class="tag partial">partial evidence</span>';
+  if(s.s==="missing") tags+='<span class="tag missing">needs evidence</span>';
+  tags+='<span class="tag">step '+(idx+1)+' of '+flow().steps.length+'</span>';
+  $("tags").innerHTML=tags;
+  $("title").textContent=s.title;
+  $("what").innerHTML=s.what;
+
+  var h="";
+  h+=blk("why","Why this exists",s.why);
+  h+=blk("how","What it defeats",s.how);
+  h+=blk("edge","What it does NOT defeat",s.edge);
+  h+=blk("","Worth noting",s.note);
+  if(s.gap) h+='<div class="blk gap"><h5>&#9888; What Atlas lacks here</h5><p>'+s.gap+'</p></div>';
+  else h+='<div class="nogap">&#10003; No open gap at this step</div>';
+  h+=blk("code","In our code",s.code);
+  h+=blk("rm","If you removed this control",s.rm);
+  $("blocks").innerHTML=h;
+}
+
+function renderRail(){
+  var f=flow();
+  $("rail").innerHTML=f.steps.map(function(s,i){
+    return '<button class="dot'+(i<idx?" past":"")+(i===idx?" now":"")+(s.gap?" gap":"")+
+      '" data-i="'+i+'" aria-label="Step '+(i+1)+'"></button>';
+  }).join("");
+  [].slice.call($("rail").querySelectorAll(".dot")).forEach(function(d){
+    d.addEventListener("click",function(){ stop(); idx=+d.dataset.i; renderAll(); });
+  });
+}
+
+function renderAll(){
+  var f=flow();
+  [].slice.call($("flows").children).forEach(function(b){
+    b.setAttribute("aria-pressed",String(b.dataset.k===flowKey));});
+  $("flowsub").textContent=f.sub;
+  $("diahead").textContent=f.name+" — "+f.steps.length+" steps";
+  $("count").textContent=(idx+1)+" / "+f.steps.length;
+  $("prev").disabled=idx===0;
+  $("next").disabled=idx===f.steps.length-1;
+  renderRail(); renderDiagram(); renderState(); renderPanel();
+  var p=$("blocks").parentNode; if(p&&p.scrollTop) p.scrollTop=0;
+}
+
+/* ── controls ── */
+function go(d){
+  var n=flow().steps.length;
+  var t=idx+d;
+  if(t<0||t>=n){ if(d>0) stop(); return; }
+  idx=t; renderAll();
+}
+function stop(){ if(timer){clearInterval(timer);timer=null;} $("play").setAttribute("aria-pressed","false"); $("play").innerHTML="&#9654;"; }
+function play(){
+  if(timer){stop();return}
+  $("play").setAttribute("aria-pressed","true"); $("play").innerHTML="&#10073;&#10073;";
+  timer=setInterval(function(){
+    if(idx>=flow().steps.length-1){stop();return}
+    go(1);
+  },7000);
+}
+$("prev").addEventListener("click",function(){stop();go(-1)});
+$("next").addEventListener("click",function(){stop();go(1)});
+$("play").addEventListener("click",play);
+document.addEventListener("keydown",function(e){
+  if(e.target&&/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+  if(e.key==="ArrowLeft"){stop();go(-1);e.preventDefault()}
+  else if(e.key==="ArrowRight"){stop();go(1);e.preventDefault()}
+  else if(e.key===" "){play();e.preventDefault()}
+});
+
+renderAll();
+})();
+</script>
+</body>
+</html>

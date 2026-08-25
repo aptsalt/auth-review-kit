@@ -1,0 +1,42 @@
+{
+  "profile": "northwind-atlas",
+  "workspace": "../review-workspace",
+  "correlation": {
+    "last_run": null,
+    "window": "30d"
+  },
+  "repos": [
+    {
+      "name": "atlas-ui",
+      "path": "atlas-ui",
+      "language": "TypeScript / Angular",
+      "kind": "spa",
+      "tier": "client",
+      "dynatrace": { "entity": null, "type": null, "status": "unmapped" },
+      "onboarded": "2026-08-24",
+      "reviewed": null,
+      "dimensions_planned": ["secret-leak", "token-storage", "client-crypto", "xss-surface", "supply-chain", "state-cleanup"],
+      "dimensions_run": [],
+      "findings": { "critical": 0, "high": 0, "medium": 0, "low": 0 },
+      "verdicts": { "observed": 0, "consistent": 0, "no_signal": 0, "blind": 0, "unobservable": 0 },
+      "evidence_gaps": 0,
+      "notes": "Atlas UI SPA. Front-end — look for a RUM application entity, not a service."
+    },
+    {
+      "name": "sentinel-config",
+      "path": "sentinel-config",
+      "language": "Jinja2 / JavaScript",
+      "kind": "config",
+      "tier": "gateway-identity",
+      "dynatrace": { "entity": null, "type": null, "status": "blind" },
+      "onboarded": "2026-08-24",
+      "reviewed": null,
+      "dimensions_planned": ["config-drift", "token-integrity", "fail-mode", "secret-leak"],
+      "dimensions_run": [],
+      "findings": { "critical": 0, "high": 0, "medium": 0, "low": 0 },
+      "verdicts": { "observed": 0, "consistent": 0, "no_signal": 0, "blind": 0, "unobservable": 0 },
+      "evidence_gaps": 0,
+      "notes": "Config repo, no runtime entity of its own. Highest-yield pattern here is diffing sibling templates against each other."
+    }
+  ]
+}
