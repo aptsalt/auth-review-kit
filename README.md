@@ -18,6 +18,7 @@ content — the estate they came from is not identified anywhere.
 | **`explainer.html`** | **Trace Walker.** Step through a flow one hop at a time. Each step answers *what / why / what it defeats / what it does NOT defeat*, shows the live state of every token store, and flags where the system is thin. Four flows: Login, API call + refresh, High-risk step-up, Logout + cleanup. **Start here.** |
 | **`index.html`** | **Identity Flight Deck.** Full reference — 12 sections + appendices with sequence diagrams, a 14-card recall drill, and a 12-module study plan. Progress persists in the browser. |
 | **`corroborated-review.html`** | **Corroborated Review.** The review method as a briefing you can screen-share, plus a per-audience presentation playbook. |
+| **`guardrail-loop.html`** | **Guardrail Loop.** Turning findings into SDLC change — pattern→control map, intervention ladder, the agentic telemetry→PR→guardrail loop, maturity model, 90-day sequence. |
 | `00-MASTER-ARCHITECTURE.md` | Complete written reference with evidence markers and code citations. |
 | `01-STUDY-PLAN.md` | 12 modules mapped to RFCs, six-week schedule, ranked reading list. |
 | `02-CHEATSHEET.md` | One page. The sentence, the three numbers, the standards map. |

@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guardrail Loop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600;700&display=swap">
+<style>
+:root{
+  --bg:#F2F4F7; --sf:#FFFFFF; --sf2:#E9EDF3; --sf3:#DDE3EC;
+  --ink:#111823; --ink2:#46546B; --ink3:#6E7C93;
+  --line:#D4DBE5; --line2:#BDC7D6;
+  --ac:#1B4F9C; --acs:#E3ECFA;
+  --ok:#136B41; --oks:#DEF0E6;
+  --wn:#8A5D00; --wns:#F8EBD2;
+  --bd:#A81F18; --bds:#FAE3E1;
+  --f-d:"IBM Plex Serif",Georgia,serif;
+  --f-b:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-m:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0D131B; --sf:#141D28; --sf2:#1B2633; --sf3:#243040;
+  --ink:#E9EEF5; --ink2:#A9B6C8; --ink3:#7C8CA3;
+  --line:#293645; --line2:#3A4A5D;
+  --ac:#79ADFF; --acs:#152540;
+  --ok:#5CCB90; --oks:#122A20;
+  --wn:#E6B44A; --wns:#2A2415;
+  --bd:#FF847B; --bds:#2E1A19;
+}}
+:root[data-theme="dark"]{
+  --bg:#0D131B; --sf:#141D28; --sf2:#1B2633; --sf3:#243040;
+  --ink:#E9EEF5; --ink2:#A9B6C8; --ink3:#7C8CA3;
+  --line:#293645; --line2:#3A4A5D;
+  --ac:#79ADFF; --acs:#152540;
+  --ok:#5CCB90; --oks:#122A20;
+  --wn:#E6B44A; --wns:#2A2415;
+  --bd:#FF847B; --bds:#2E1A19;
+}
+*{box-sizing:border-box}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+html{scroll-behavior:smooth;scroll-padding-top:66px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-b);
+  font-size:17px;line-height:1.68;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--f-d);margin:0;line-height:1.2;text-wrap:balance;letter-spacing:-.015em}
+p{margin:0}
+strong{font-weight:600;color:var(--ink)}
+code{font-family:var(--f-m);font-size:.84em;background:var(--sf2);border:1px solid var(--line);
+  border-radius:5px;padding:.08em .38em}
+:focus-visible{outline:2px solid var(--ac);outline-offset:3px;border-radius:4px}
+
+.bar{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 90%,transparent);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.bar-in{max-width:1140px;margin:0 auto;padding:9px 26px;display:flex;align-items:center;gap:14px}
+.bar b{font-family:var(--f-d);font-size:15px;font-weight:600}
+.bar nav{margin-left:auto;display:flex;gap:2px;flex-wrap:wrap}
+.bar a{font-family:var(--f-m);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink3);text-decoration:none;padding:5px 9px;border-radius:6px}
+.bar a:hover{color:var(--ink);background:var(--sf2)}
+.tg{background:var(--sf2);border:1px solid var(--line);color:var(--ink2);width:31px;height:31px;
+  border-radius:7px;cursor:pointer;font-size:14px;line-height:1}
+@media(max-width:900px){.bar nav{display:none}}
+
+.wrap{max-width:1140px;margin:0 auto;padding:0 26px}
+.measure{max-width:70ch}
+.eyebrow{font-family:var(--f-m);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ac)}
+.kick{font-family:var(--f-m);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink3)}
+.stack{display:flex;flex-direction:column;gap:22px}
+section{padding:60px 0;border-bottom:1px solid var(--line)}
+.shead{display:flex;gap:20px;align-items:baseline;margin-bottom:24px}
+.snum{font-family:var(--f-m);font-size:12px;color:var(--ac);letter-spacing:.1em;min-width:28px;padding-top:4px}
+.shead h2{font-size:clamp(24px,3.3vw,33px);font-weight:600}
+
+.hero{padding:74px 0 56px;border-bottom:1px solid var(--line)}
+.hero h1{font-size:clamp(36px,6vw,62px);font-weight:700;margin:22px 0 24px;max-width:17ch}
+.lede{font-size:clamp(19px,2.2vw,23px);line-height:1.5;color:var(--ink2);max-width:58ch}
+.lede b{color:var(--ink)}
+
+.pull{font-family:var(--f-d);font-size:clamp(21px,2.7vw,28px);line-height:1.42;color:var(--ink);
+  border-left:3px solid var(--ac);padding:5px 0 5px 26px;max-width:46ch}
+.pull.bad{border-left-color:var(--bd)}
+.pull.ok{border-left-color:var(--ok)}
+
+.card{background:var(--sf);border:1px solid var(--line);border-radius:12px;padding:21px 24px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(175px,1fr))}
+.card h4{font-size:17.5px;margin-bottom:8px}
+.card p{font-size:15.5px;color:var(--ink2)}
+
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--sf)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:680px}
+th{text-align:left;font-family:var(--f-m);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink3);font-weight:500;padding:11px 16px;background:var(--sf2);
+  border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid var(--line);color:var(--ink2);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--sf2)}
+td strong{color:var(--ink)}
+.mono{font-family:var(--f-m);font-size:12.5px}
+
+.pill{display:inline-flex;font-family:var(--f-m);font-size:10.5px;letter-spacing:.05em;
+  text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid;white-space:nowrap;font-weight:500}
+.p-ok{color:var(--ok);background:var(--oks);border-color:color-mix(in srgb,var(--ok) 35%,transparent)}
+.p-wn{color:var(--wn);background:var(--wns);border-color:color-mix(in srgb,var(--wn) 35%,transparent)}
+.p-bd{color:var(--bd);background:var(--bds);border-color:color-mix(in srgb,var(--bd) 35%,transparent)}
+.p-ac{color:var(--ac);background:var(--acs);border-color:color-mix(in srgb,var(--ac) 35%,transparent)}
+
+.note{border-left:3px solid var(--ac);background:var(--acs);border-radius:0 10px 10px 0;
+  padding:16px 21px;max-width:74ch}
+.note.bad{border-left-color:var(--bd);background:var(--bds)}
+.note.warn{border-left-color:var(--wn);background:var(--wns)}
+.note.ok{border-left-color:var(--ok);background:var(--oks)}
+.note .l{display:block;font-family:var(--f-m);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  font-weight:500;margin-bottom:6px;color:var(--ac)}
+.note.bad .l{color:var(--bd)} .note.warn .l{color:var(--wn)} .note.ok .l{color:var(--ok)}
+.note p{font-size:15.5px;color:var(--ink2)}
+
+ol.n{margin:0;padding:0;list-style:none;counter-reset:x;display:flex;flex-direction:column;gap:14px;max-width:72ch}
+ol.n>li{counter-increment:x;position:relative;padding-left:41px;color:var(--ink2)}
+ol.n>li::before{content:counter(x);position:absolute;left:0;top:2px;width:27px;height:27px;border-radius:8px;
+  background:var(--acs);color:var(--ac);border:1px solid color-mix(in srgb,var(--ac) 28%,transparent);
+  font-family:var(--f-m);font-size:12px;font-weight:500;display:grid;place-items:center}
+ul.b{margin:0;padding-left:21px;display:flex;flex-direction:column;gap:10px;color:var(--ink2);max-width:72ch}
+
+/* pipeline */
+.pipe{background:var(--sf);border:1px solid var(--line);border-radius:12px;padding:0;overflow-x:auto}
+.pipe-h{font-family:var(--f-m);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink3);
+  padding:10px 17px;border-bottom:1px solid var(--line);background:var(--sf2)}
+.pipe-b{padding:20px 17px;min-width:820px}
+.stages{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;align-items:stretch}
+.stg{border:1px solid var(--line2);border-radius:9px;padding:11px 10px;background:var(--sf2);
+  display:flex;flex-direction:column;gap:6px}
+.stg .n{font-family:var(--f-m);font-size:9px;letter-spacing:.1em;color:var(--ink3)}
+.stg b{font-family:var(--f-m);font-size:11.5px;color:var(--ink);line-height:1.3}
+.stg span{font-size:11px;color:var(--ink3);line-height:1.4}
+.stg.agent{background:var(--acs);border-color:color-mix(in srgb,var(--ac) 40%,transparent)}
+.stg.agent b{color:var(--ac)}
+.stg.human{background:var(--wns);border-color:color-mix(in srgb,var(--wn) 42%,transparent)}
+.stg.human b{color:var(--wn)}
+.arrows{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-top:9px}
+.arrows i{grid-column:1/-1;display:block;height:0;border-top:1.5px dashed var(--ac);position:relative}
+.arrows i::after{content:"verify: did the signal drop?";position:absolute;left:50%;top:-9px;
+  transform:translateX(-50%);background:var(--sf);padding:0 10px;font-family:var(--f-m);
+  font-size:10px;color:var(--ac);letter-spacing:.05em}
+.arrows i::before{content:"";position:absolute;left:0;top:-4.5px;width:0;height:0;
+  border-top:4.5px solid transparent;border-bottom:4.5px solid transparent;border-right:7px solid var(--ac)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;font-family:var(--f-m);
+  font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
+.legend span{display:flex;align-items:center;gap:6px}
+.sw{width:11px;height:11px;border-radius:3px;border:1px solid}
+.sw.a{background:var(--acs);border-color:var(--ac)}
+.sw.h{background:var(--wns);border-color:var(--wn)}
+
+/* ladder */
+.ladder{display:flex;flex-direction:column;gap:9px}
+.rung{display:grid;grid-template-columns:106px 1fr;gap:16px;align-items:start;
+  border:1px solid var(--line);border-radius:11px;padding:15px 19px;background:var(--sf)}
+.rung .lv{font-family:var(--f-m);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 10px;border-radius:7px;text-align:center}
+.rung .c b{display:block;font-family:var(--f-d);font-size:17px;font-weight:600;margin-bottom:5px}
+.rung .c p{font-size:15px;color:var(--ink2)}
+.rung.r1 .lv{background:var(--sf2);color:var(--ink3);border:1px solid var(--line2)}
+.rung.r2 .lv{background:var(--wns);color:var(--wn);border:1px solid color-mix(in srgb,var(--wn) 40%,transparent)}
+.rung.r3 .lv{background:var(--acs);color:var(--ac);border:1px solid color-mix(in srgb,var(--ac) 40%,transparent)}
+.rung.r4{border-color:color-mix(in srgb,var(--ok) 45%,transparent);background:var(--oks)}
+.rung.r4 .lv{background:var(--ok);color:var(--bg);border:1px solid var(--ok)}
+
+/* maturity */
+.mat{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:12px;
+  overflow:hidden;background:var(--sf)}
+.mat-r{display:grid;grid-template-columns:52px 1fr 200px;gap:16px;padding:14px 19px;
+  border-bottom:1px solid var(--line);align-items:start}
+.mat-r:last-child{border-bottom:0}
+.mat-r .l{font-family:var(--f-m);font-size:13px;color:var(--ac);font-weight:600;padding-top:2px}
+.mat-r .c b{display:block;font-family:var(--f-d);font-size:16.5px;font-weight:600;margin-bottom:4px}
+.mat-r .c p{font-size:14.5px;color:var(--ink2)}
+.mat-r .w{font-size:13px;color:var(--ink3);font-family:var(--f-m);line-height:1.45}
+.mat-r.stop{background:var(--wns)}
+.mat-r.stop .l{color:var(--wn)}
+.mat-r.no{background:var(--bds)}
+.mat-r.no .l{color:var(--bd)}
+@media(max-width:760px){.mat-r{grid-template-columns:44px 1fr}.mat-r .w{grid-column:2}}
+
+footer{padding:38px 0 80px;color:var(--ink3);font-size:14.5px;max-width:72ch}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="bar-in">
+    <b>Guardrail Loop</b>
+    <nav>
+      <a href="#pivot">The pivot</a><a href="#map">Pattern map</a><a href="#ladder">Ladder</a>
+      <a href="#loop">The loop</a><a href="#maturity">Maturity</a><a href="#risk">Risk</a><a href="#plan">Plan</a>
+    </nav>
+    <button class="tg" id="tg" aria-label="Toggle theme">&#9686;</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+<div class="hero">
+  <div class="eyebrow">From review findings to a self-healing SDLC</div>
+  <h1>Fix the class, not the instance</h1>
+  <p class="lede">28 repos of findings is not the asset. <b>The patterns across them are.</b>
+    A defect appearing in nine repos is not nine developers making nine mistakes — it is the
+    delivery process permitting it nine times. That distinction is what turns an audit into
+    a funded programme.</p>
+</div>
+
+<!-- PIVOT -->
+<section id="pivot">
+  <div class="shead"><span class="snum">01</span><h2>The pivot</h2></div>
+  <div class="stack">
+    <div class="grid g2">
+      <div class="card" style="border-color:color-mix(in srgb,var(--bd) 30%,transparent)">
+        <h4 style="color:var(--bd)">Findings list</h4>
+        <p>Arrives as N problems belonging to N teams. Reads as a scoreboard. Teams defend, argue
+          scope, and absorb the work as unplanned cost. It ages out in a sprint and nobody re-runs it.
+          <strong>Best case, some bugs get fixed. The next repo ships the same defect.</strong></p>
+      </div>
+      <div class="card" style="border-color:color-mix(in srgb,var(--ok) 30%,transparent)">
+        <h4 style="color:var(--ok)">Pattern list</h4>
+        <p>Arrives as a handful of <em>classes</em>, each present in many repos, each with a named
+          control that would have prevented it. Belongs to the platform, not to any team. Nobody is
+          blamed. <strong>The fix is structural, so it holds for repo 29 without anyone reviewing it.</strong></p>
+      </div>
+    </div>
+
+    <p class="pull">One is a code review. The other is a process finding — and process findings are the only kind that get funded.</p>
+
+    <p class="measure">You also hold something almost nobody proposing an SDLC change has:
+      <strong>telemetry evidence for which defect classes actually cost production.</strong> That converts
+      "we should add guardrails" into "these three classes caused real incidents in the last 30 days,
+      and here is the specific control that would have caught each one." That is an argument that
+      survives a steering committee.</p>
+
+    <div class="note"><span class="l">The sentence to open with</span>
+      <p>"I reviewed 28 repositories and cross-checked every finding against 30 days of production
+        telemetry. I am not here with a list of bugs for your teams. I am here with <strong>six defect
+        classes our delivery process currently allows</strong>, ranked by what production is already
+        paying for them."</p></div>
+  </div>
+</section>
+
+<!-- MAP -->
+<section id="map">
+  <div class="shead"><span class="snum">02</span><h2>Pattern → control map</h2></div>
+  <div class="stack">
+    <p class="measure">This is the deliverable. Every recurring defect class maps to a control, and every
+      control has a home in the pipeline. Build this table from your own findings — the classes below are
+      the ones that recur in most estates.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Defect class</th><th>What it says about the SDLC</th><th>The control that prevents it</th><th>Where it lives</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Secret / token in logs</strong></td><td>No pre-merge secret detection; logging conventions unwritten</td><td>Secret scanning + a logging wrapper that redacts by default</td><td class="mono">pre-commit + CI</td></tr>
+        <tr><td><strong>Unsigned / unverified JWT</strong></td><td>Every service hand-rolls token handling</td><td>One shared verified-JWT library; a rule banning raw decode on a trust path</td><td class="mono">platform lib + SAST rule</td></tr>
+        <tr><td><strong>Outbound call with no timeout</strong></td><td>HTTP clients constructed ad hoc per service</td><td>A client factory that <em>cannot</em> be built without a timeout, plus an architecture test</td><td class="mono">platform lib + unit test</td></tr>
+        <tr><td><strong>Config drift between environments</strong></td><td>Templates copied, then diverge silently</td><td>Golden-config test diffing security keys across every template</td><td class="mono">CI gate</td></tr>
+        <tr><td><strong>Cleanup only on the success path</strong></td><td>No shared teardown contract</td><td>Test pattern asserting cleanup runs on the failure path too</td><td class="mono">test scaffold</td></tr>
+        <tr><td><strong>Fail-open where fail-closed was meant</strong></td><td>Failure policy is implicit, never declared</td><td>Explicit policy annotation per dependency + a review checklist item</td><td class="mono">design + PR template</td></tr>
+        <tr><td><strong>Service not instrumented</strong></td><td>Observability is opt-in</td><td>Instrumentation in the service scaffold; a deploy gate on entity registration</td><td class="mono">scaffold + deploy gate</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note warn"><span class="l">Rank it with the telemetry you already have</span>
+      <p>Order this table by <strong>how many repos the class appears in × whether production has
+        observed it</strong>. That ordering is the roadmap, and it is defensible because neither factor
+        is your opinion. Lead the proposal with the top three only — a seven-row table is a discussion,
+        a three-row proposal is a decision.</p></div>
+  </div>
+</section>
+
+<!-- LADDER -->
+<section id="ladder">
+  <div class="shead"><span class="snum">03</span><h2>The intervention ladder</h2></div>
+  <div class="stack">
+    <p class="measure">For every class, you can intervene at four heights. Most organisations reach for
+      the second rung and wonder why nothing improves. <strong>Climb as high as the class allows.</strong></p>
+    <div class="ladder">
+      <div class="rung r1"><span class="lv">1 · detect</span><div class="c"><b>Report it</b>
+        <p>A scan produces a list. Zero friction, zero enforcement — and zero change, because a report
+          nobody is accountable for is a report nobody reads. Useful only as a baseline measurement.</p></div></div>
+      <div class="rung r2"><span class="lv">2 · warn</span><div class="c"><b>Comment on the PR</b>
+        <p>Non-blocking annotation at the moment of change. Better, because the feedback lands where the
+          decision is made. Decays: warnings that are routinely ignored train people to ignore warnings.</p></div></div>
+      <div class="rung r3"><span class="lv">3 · block</span><div class="c"><b>Fail the build</b>
+        <p>Now it holds. Costs goodwill if the rule is noisy, so a blocking rule must be near-zero false
+          positive and have a documented, quick escape hatch. Earn this rung with data, don't assume it.</p></div></div>
+      <div class="rung r4"><span class="lv">4 · prevent</span><div class="c"><b>Make it unbuildable</b>
+        <p><strong>The rung that actually ends a defect class.</strong> Not a rule that catches a missing
+          timeout — a client that cannot be constructed without one. Not a scan for raw JWT decoding — a
+          library where the only available method verifies. Nothing to remember, nothing to enforce, no
+          false positives, and it works for every repo written after it, forever.</p></div></div>
+    </div>
+    <p class="pull ok">A rule tells people not to make the mistake. A design means the mistake has no expression.</p>
+    <p class="measure">Prevention is not always reachable — you cannot design away a fail-open policy
+      decision. When you can't reach rung 4, land on 3 for classes production has observed, and 2 for
+      the rest. <strong>Say which rung you are proposing and why</strong>; that specificity is what makes
+      it a plan rather than an aspiration.</p>
+  </div>
+</section>
+
+<!-- LOOP -->
+<section id="loop">
+  <div class="shead"><span class="snum">04</span><h2>The agentic loop</h2></div>
+  <div class="stack">
+    <p class="measure">Seven stages. The agent does the expensive reading and drafting; a human owns
+      every gate where consequence enters the system. The loop only closes when telemetry confirms the
+      signal actually dropped — <strong>without that last arrow it is not a loop, it is a pipeline that
+      generates work.</strong></p>
+
+    <div class="pipe">
+      <div class="pipe-h">Telemetry-driven change, with the human gates marked</div>
+      <div class="pipe-b">
+        <div class="stages">
+          <div class="stg agent"><span class="n">01</span><b>Signal</b><span>A problem fires, or a scheduled pull surfaces a pattern</span></div>
+          <div class="stg agent"><span class="n">02</span><b>Correlate</b><span>Map entity → repo → code path. Verdict + confidence</span></div>
+          <div class="stg human"><span class="n">03</span><b>Triage gate</b><span>Human confirms it is real and worth acting on</span></div>
+          <div class="stg agent"><span class="n">04</span><b>Story</b><span>Ticket with evidence, blast radius, suspected cause</span></div>
+          <div class="stg agent"><span class="n">05</span><b>Draft PR</b><span>Failing test first, then the fix that makes it pass</span></div>
+          <div class="stg human"><span class="n">06</span><b>Review gate</b><span>Human reviews, approves, merges. Always.</span></div>
+          <div class="stg agent"><span class="n">07</span><b>Guardrail</b><span>The rule or design change so the class cannot recur</span></div>
+        </div>
+        <div class="arrows"><i></i></div>
+        <div class="legend">
+          <span><i class="sw a"></i>agent proposes</span>
+          <span><i class="sw h"></i>human decides</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid g2">
+      <div class="card"><h4>02 · Correlate</h4><p>The stage everything else depends on. Entity-to-repo
+        mapping must be explicit, and low-confidence matches must stop here rather than proceed.
+        <strong>A confidently wrong correlation sends the agent to fix the wrong file</strong> — and one
+        of those in front of a team costs more trust than ten good PRs earn.</p></div>
+      <div class="card"><h4>03 · Triage gate</h4><p>Cheap, and it protects everything downstream. A human
+        spends thirty seconds confirming the correlation is plausible. Skipping this to look more
+        autonomous is the most common way these systems fail.</p></div>
+      <div class="card"><h4>05 · Draft PR</h4><p><strong>Failing test first.</strong> The test is the
+        deliverable; the fix is the easy part. A PR that only changes code asks a reviewer to trust the
+        agent's reasoning. A PR with a test that fails before and passes after asks them to trust the
+        test — which is a thing they can actually verify in seconds.</p></div>
+      <div class="card"><h4>07 · Guardrail</h4><p>Where self-healing actually happens. Fixing the instance
+        is a patch. Adding the control that makes the class unrepresentable is the healing. If stage 07
+        is skipped, the loop generates an endless supply of stage 05.</p></div>
+    </div>
+
+    <div class="note ok"><span class="l">The closing arrow</span>
+      <p>After the merge reaches production, the agent re-queries telemetry for the original signal.
+        <strong>Signal gone → the story closes with evidence. Signal unchanged → the fix was wrong, and
+        the ticket reopens automatically with that fact attached.</strong> This is the single most
+        valuable part of the design and the part everyone leaves out — it is what stops the system
+        confidently generating plausible fixes that change nothing.</p></div>
+  </div>
+</section>
+
+<!-- MATURITY -->
+<section id="maturity">
+  <div class="shead"><span class="snum">05</span><h2>Maturity — and where to stop</h2></div>
+  <div class="stack">
+    <p class="measure">Do not propose the top of this ladder. Propose L1, demonstrate it, and let the
+      organisation pull you upward. Every level is independently valuable, which means every level is a
+      place you can credibly stop.</p>
+    <div class="mat">
+      <div class="mat-r"><span class="l">L0</span><div class="c"><b>Manual</b>
+        <p>A human notices a problem, hunts the code, writes the ticket, writes the fix.</p></div>
+        <div class="w">today</div></div>
+      <div class="mat-r"><span class="l">L1</span><div class="c"><b>Enrichment</b>
+        <p>A problem fires; the agent attaches code context, the owning repo, recent changes and prior
+          related findings. No code is written. Pure time saved, zero risk.</p></div>
+        <div class="w">start here — earns trust with nothing at stake</div></div>
+      <div class="mat-r"><span class="l">L2</span><div class="c"><b>Authored story</b>
+        <p>The agent writes the ticket: evidence, blast radius, suspected root cause, affected users.
+          A human accepts or rejects.</p></div>
+        <div class="w">low risk, visible value</div></div>
+      <div class="mat-r"><span class="l">L3</span><div class="c"><b>Draft PR with a test</b>
+        <p>The agent opens a draft PR: failing test, then the fix. Never auto-merged, never marked
+          ready without a human.</p></div>
+        <div class="w">the honest target for most teams</div></div>
+      <div class="mat-r stop"><span class="l">L4</span><div class="c"><b>Guardrail authoring</b>
+        <p>On a recurring class, the agent proposes the lint rule, architecture test or scaffold change
+          that prevents recurrence — as its own reviewed PR.</p></div>
+        <div class="w">the real prize. stop here in a regulated estate.</div></div>
+      <div class="mat-r no"><span class="l">L5</span><div class="c"><b>Autonomous merge</b>
+        <p>The agent merges without human approval, inside a narrow allowlist, with automatic rollback.</p></div>
+        <div class="w">not in a bank. not on auth code. don't propose it.</div></div>
+    </div>
+    <div class="note bad"><span class="l">Say this out loud, early</span>
+      <p>"There is no stage in this design where an agent merges code without a named human approving
+        it." You will be asked. <strong>Answering it before you are asked is what gets you past risk and
+        audit</strong> — and volunteering your own ceiling is what makes the rest of the proposal
+        credible.</p></div>
+  </div>
+</section>
+
+<!-- RISK -->
+<section id="risk">
+  <div class="shead"><span class="snum">06</span><h2>How this loses trust</h2></div>
+  <div class="stack">
+    <p class="measure">Each of these has killed a real programme. Design against them from the start —
+      and name them in the proposal, because the people who will approve this are already thinking them.</p>
+    <div class="grid g2">
+      <div class="card"><h4>The confidently wrong PR</h4><p>A subtly incorrect fix, delivered with
+        conviction, wastes a senior engineer's afternoon. Two of those and the system is switched off.
+        <strong>Mitigation:</strong> low confidence must produce a question, not a patch — and every PR
+        carries its correlation verdict so a reviewer can calibrate before reading a line.</p></div>
+      <div class="card"><h4>The noisy guardrail</h4><p>A blocking rule with false positives gets
+        disabled within two sprints, and the next proposed rule is refused on sight.
+        <strong>Mitigation:</strong> ship every rule in warn mode, measure its false-positive rate on
+        real history, and only promote to blocking with that number in hand.</p></div>
+      <div class="card"><h4>Volume as a proxy for value</h4><p>"The agent opened 60 PRs this month" is not
+        a result — it may be a cost. <strong>Mitigation:</strong> measure merged-without-rework rate,
+        defect classes closed, and repeat-incident rate. Never PR count.</p></div>
+      <div class="card"><h4>Unclear accountability</h4><p>When an agent-authored change breaks
+        production, "the AI did it" is not an answer a bank accepts. <strong>Mitigation:</strong> the
+        approving human is the author of record. The agent is a tool, exactly like an IDE refactor —
+        say this in those words.</p></div>
+      <div class="card"><h4>Correlation drift</h4><p>Entity-to-repo mappings rot as services are renamed
+        and split. <strong>Mitigation:</strong> unmapped entities are a tracked defect, and stale
+        mappings fail the run loudly rather than silently mis-attributing.</p></div>
+      <div class="card"><h4>Audit and change control</h4><p>Regulated change management needs a traceable
+        chain. <strong>Mitigation:</strong> every artifact links backwards — guardrail to PR to story to
+        correlation to the original problem ID. Build that chain from day one; retrofitting it is
+        painful and it is the first thing audit will ask for.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PLAN -->
+<section id="plan">
+  <div class="shead"><span class="snum">07</span><h2>A 90-day sequence</h2></div>
+  <div class="stack">
+    <p class="measure">Each phase is independently defensible, and each produces something you could
+      stop at. That is deliberate — a proposal that only pays off at the end never gets started.</p>
+    <ol class="n">
+      <li><strong>Weeks 1–2 — Publish the pattern map.</strong> Turn your 28 repos of findings into the
+        §02 table, ranked by prevalence × production corroboration. Circulate it with no ask attached.
+        Let people react to the shape of the problem before you propose anything. <em>Deliverable: one
+        table, three pages of context.</em></li>
+      <li><strong>Weeks 3–4 — Land one guardrail, in warn mode.</strong> Pick the class that is highest
+        prevalence and observed in production, and implement the highest rung on the ladder you can
+        reach. Warn only. Measure the false-positive rate. <em>Deliverable: a working control and a
+        number.</em></li>
+      <li><strong>Weeks 5–6 — Promote it to blocking.</strong> With the false-positive number in hand,
+        propose promotion. Publish the before/after count across the estate. <em>Deliverable: the first
+        defect class that is now structurally impossible.</em></li>
+      <li><strong>Weeks 7–9 — L1 enrichment.</strong> Wire the telemetry-to-code correlation so problems
+        arrive pre-enriched with owning repo, code context and prior findings. No code generation at all.
+        <em>Deliverable: mean-time-to-context, before and after.</em></li>
+      <li><strong>Weeks 10–12 — L2/L3 on one team.</strong> One volunteer team, one repo, agent-authored
+        stories and draft PRs with tests. Measure merged-without-rework. <em>Deliverable: evidence for
+        or against expanding — and be genuinely willing to report "against".</em></li>
+    </ol>
+    <div class="note"><span class="l">What makes this proposal different</span>
+      <p>Most SDLC pitches start at the tooling and argue toward the benefit. This one starts with
+        <strong>evidence the organisation already owns</strong> — its own repos, its own telemetry — and
+        argues toward the smallest control that would have prevented what already happened. Every step
+        is measured, every step can be stopped, and the first two do not require anyone's permission to
+        begin.</p></div>
+  </div>
+</section>
+
+<footer>
+  Companion to the review method briefing. Method-level only — contains no findings, service names or
+  estate detail. The pattern map in §02 is a starting shape; the real one comes from your own findings
+  ranked by prevalence and production corroboration.
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var r=document.documentElement,b=document.getElementById("tg");
+  try{var s=localStorage.getItem("cr-theme");if(s)r.setAttribute("data-theme",s)}catch(e){}
+  b.addEventListener("click",function(){
+    var c=r.getAttribute("data-theme");
+    var n=c==="dark"?"light":c==="light"?"dark":
+      (window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"light":"dark");
+    r.setAttribute("data-theme",n);
+    try{localStorage.setItem("cr-theme",n)}catch(e){}
+  });
+})();
+</script>
+</body>
+</html>
