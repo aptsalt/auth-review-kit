@@ -1,4 +1,4 @@
-# CIAM Mastery
+# Identity Mastery
 
 Everything reconstructed from the 32 photos of `04-identity-r3-architecture-explainer.md`
 (captured from source architecture screenshots, 2026-08-22).
@@ -10,6 +10,8 @@ Everything reconstructed from the 32 photos of `04-identity-r3-architecture-expl
 | **`00-MASTER-ARCHITECTURE.md`** | The complete reference. Every section, every repo file:line, every evidence marker. Mermaid diagrams render in VS Code preview / Obsidian. | When you need the exact detail or a code reference. |
 | **`01-STUDY-PLAN.md`** | The full curriculum — 12 modules with RFC mappings, architect questions, 6-week schedule, ranked reading list. | Weekly planning. |
 | **`02-CHEATSHEET.md`** | One page. The sentence, the three numbers, the five gaps, the standards map. | Before a meeting, a review, or an interview. |
+| **`corroborated-review.html`** | **Corroborated Review** — the review method as a briefing, plus a per-audience presentation playbook. | Presenting the method to a team or a lead. |
+| **`guardrail-loop.html`** | **Guardrail Loop** — turning findings into SDLC change: pattern→control map, intervention ladder, the agentic telemetry→PR→guardrail loop, maturity model, 90-day sequence. | Proposing process change or building the agentic pipeline. |
 
 ## Start here
 
